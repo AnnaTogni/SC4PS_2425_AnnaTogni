@@ -9,7 +9,7 @@ The program then checks that every element of **d** has the expected value.
 | File | Content |
 |---|---|
 | `NumericalSum.c` | Solution of the homework (current version) |
-| `Makefile` | Builds `numericalsum` |
+| `Makefile` | Builds `numericalsum` and prints how to use it (`make help` prints it again) |
 | `NumericalSum_old.c` | First version, kept for reference |
 | `CHANGES.md` | What changed between the two versions, and why |
 
