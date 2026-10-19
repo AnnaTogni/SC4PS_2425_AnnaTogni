@@ -6,6 +6,7 @@ My solutions to the homework of the Scientific Computing class.
 
 | Folder | Topic |
 |---|---|
+| HomeWork1 | Guide: Linux VM on CloudVeneto for C development |
 | HomeWork2 | Numerical sum |
 | HomeWork3 | Hardware, data structures, matrix multiplication |
 | HomeWork4 | Sampling, DFT, FFT, Makefiles |
