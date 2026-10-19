@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detailed Explanation of sampling_dft_fft_alias_macro.C</title>
+  <style>
+    :root {
+      --bg: #0b1220;
+      --panel: #121c30;
+      --panel-soft: #182640;
+      --text: #ecf2ff;
+      --muted: #b8c7e4;
+      --accent: #8ad7ff;
+      --accent-2: #95f0c6;
+      --border: rgba(138, 215, 255, 0.18);
+      --code: #dce8ff;
+      --shadow: rgba(0, 0, 0, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.7;
+      background:
+        radial-gradient(circle at top right, rgba(138, 215, 255, 0.16), transparent 26%),
+        radial-gradient(circle at top left, rgba(149, 240, 198, 0.12), transparent 24%),
+        linear-gradient(180deg, #09101b 0%, var(--bg) 100%);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2rem 0 4rem;
+    }
+
+    header {
+      padding: 2.2rem 0 1rem;
+    }
+
+    h1, h2, h3 {
+      font-family: "Trebuchet MS", Helvetica, sans-serif;
+      line-height: 1.15;
+      margin: 0 0 0.8rem;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 4vw, 3.8rem);
+      max-width: 14ch;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: clamp(1.55rem, 2.4vw, 2.3rem);
+      color: var(--accent);
+    }
+
+    h3 {
+      margin-top: 1.2rem;
+      font-size: 1.15rem;
+      color: var(--accent-2);
+    }
+
+    p, li {
+      font-size: 1.03rem;
+    }
+
+    .lead {
+      max-width: 76ch;
+      color: var(--muted);
+      font-size: 1.1rem;
+    }
+
+    section {
+      background: linear-gradient(180deg, rgba(18, 28, 48, 0.94), rgba(10, 17, 30, 0.96));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 18px 42px var(--shadow);
+      padding: 1.5rem;
+      margin: 1rem 0;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 0.8rem;
+      color: var(--accent-2);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: "Trebuchet MS", Helvetica, sans-serif;
+      font-size: 0.8rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0 1.5rem;
+    }
+
+    .card {
+      background: rgba(24, 38, 64, 0.7);
+      border: 1px solid rgba(149, 240, 198, 0.15);
+      border-radius: 16px;
+      padding: 1rem;
+    }
+
+    .formula, pre {
+      background: var(--panel-soft);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 1rem;
+      overflow-x: auto;
+      color: var(--code);
+      font-family: "Courier New", Courier, monospace;
+      font-size: 0.96rem;
+      white-space: pre-wrap;
+    }
+
+    code {
+      color: var(--code);
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      padding-left: 1rem;
+      color: var(--muted);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1rem;
+    }
+
+    ol, ul {
+      padding-left: 1.25rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: rgba(24, 38, 64, 0.55);
+      overflow: hidden;
+      border-radius: 12px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 0.85rem;
+      vertical-align: top;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    th {
+      color: var(--accent);
+      font-family: "Trebuchet MS", Helvetica, sans-serif;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <span class="eyebrow">Macro Companion</span>
+      <h1>Detailed Explanation of <code>sampling_dft_fft_alias_macro.C</code></h1>
+      <p class="lead">
+        This document explains, in detail, every major step of the ROOT macro
+        <code>sampling_dft_fft_alias_macro.C</code> in
+        <code>HomeWork4/test1</code>. The macro is designed to build a continuous
+        signal from user-provided frequencies, sample it, compute its spectrum
+        with both a direct DFT and an FFT, measure the execution time of the two
+        approaches, and visualize the result in a six-panel canvas.
+      </p>
+    </header>
+
+    <section>
+      <span class="eyebrow">Big Picture</span>
+      <h2>What the macro is trying to teach</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>Sampling</h3>
+          <p>The macro turns a mathematically continuous signal into values on a uniform time grid.</p>
+        </article>
+        <article class="card">
+          <h3>Aliasing</h3>
+          <p>If an input frequency lies above the Nyquist limit, the code computes the frequency that will be observed after sampling.</p>
+        </article>
+        <article class="card">
+          <h3>DFT vs FFT</h3>
+          <p>The code compares the direct mathematical definition of the DFT with a faster radix-2 FFT implementation.</p>
+        </article>
+      </div>
+      <p>
+        Conceptually, the macro follows this sequence:
+      </p>
+      <ol>
+        <li>Ask the user which sinusoidal frequencies build the signal.</li>
+        <li>Ask how fast the signal is sampled.</li>
+        <li>Compute the Nyquist frequency.</li>
+        <li>Generate the sampled data.</li>
+        <li>Compute the spectrum in two different ways.</li>
+        <li>Measure how long those methods take.</li>
+        <li>Plot both time-domain and frequency-domain views.</li>
+      </ol>
+    </section>
+
+    <section>
+      <span class="eyebrow">Libraries</span>
+      <h2>Why these headers are included</h2>
+      <pre><code>#include &lt;TCanvas.h&gt;
+#include &lt;TGraph.h&gt;
+#include &lt;TLegend.h&gt;
+#include &lt;TAxis.h&gt;
+#include &lt;TLine.h&gt;
+#include &lt;TMarker.h&gt;
+#include &lt;TMultiGraph.h&gt;
+#include &lt;TStyle.h&gt;
+#include &lt;TH1.h&gt;</code></pre>
+      <p>
+        These are ROOT graphics classes. They are responsible for building and styling
+        the final visualization. In particular:
+      </p>
+      <ul>
+        <li><code>TCanvas</code> creates the plotting window.</li>
+        <li><code>TGraph</code> stores x-y data and draws it.</li>
+        <li><code>TMultiGraph</code> overlays multiple graphs in the same pad.</li>
+        <li><code>TLegend</code> labels the plotted objects.</li>
+        <li><code>TLine</code> draws the vertical markers for frequencies and Nyquist.</li>
+        <li><code>TH1.h</code> is needed because <code>DrawFrame()</code> returns a histogram-like frame object.</li>
+      </ul>
+      <pre><code>#include &lt;algorithm&gt;
+#include &lt;chrono&gt;
+#include &lt;cmath&gt;
+#include &lt;complex&gt;
+#include &lt;iomanip&gt;
+#include &lt;iostream&gt;
+#include &lt;memory&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;</code></pre>
+      <p>
+        These are standard C++ headers. They provide numerical tools, timing, complex numbers,
+        vectors, formatted terminal output, and common helper functions such as
+        <code>std::max</code> and <code>std::swap</code>.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Namespace Block</span>
+      <h2>Why the helper functions are placed in an anonymous namespace</h2>
+      <pre><code>namespace {
+  ...
+}</code></pre>
+      <p>
+        The anonymous namespace limits the visibility of all helper functions and constants
+        to this translation unit only. In plain language: those functions are meant to be private
+        implementation details of this macro. This avoids name clashes with other code loaded in ROOT.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Constant</span>
+      <h2><code>kPi</code></h2>
+      <pre><code>constexpr double kPi = 3.14159265358979323846;</code></pre>
+      <p>
+        This defines a high-precision numerical value of π. The keyword
+        <code>constexpr</code> means the value is known at compile time. It is used throughout
+        the code for sinusoidal functions and Fourier phase factors.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Signal Builder</span>
+      <h2><code>SignalValue</code>: constructing the continuous input signal</h2>
+      <pre><code>double SignalValue(double t, const std::vector&lt;double&gt;&amp; freqs) {
+  double value = 0.0;
+  for (double f : freqs) {
+    value += std::sin(2.0 * kPi * f * t);
+  }
+  return value;
+}</code></pre>
+      <p>
+        This function defines the physical input signal. The signal is built as a sum of pure sine waves:
+      </p>
+      <div class="formula">s(t) = Σ sin(2π f_i t)</div>
+      <p>
+        Each frequency entered by the user contributes one sinusoidal component with unit amplitude and zero phase.
+        If the user enters frequencies <code>f1</code>, <code>f2</code>, and <code>f3</code>, the resulting signal is the superposition of all three.
+      </p>
+      <p class="note">
+        The macro does not currently ask for amplitudes or phases. That means every component contributes equally and starts with the same phase convention.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Aliasing Rule</span>
+      <h2><code>AliasFrequency</code>: folding frequencies into the observable band</h2>
+      <pre><code>double AliasFrequency(double f, double fs) {
+  if (fs &lt;= 0.0) {
+    return 0.0;
+  }
+
+  double wrapped = std::fmod(std::fabs(f), fs);
+  if (wrapped &lt; 0.0) {
+    wrapped += fs;
+  }
+  if (wrapped &gt; fs / 2.0) {
+    wrapped = fs - wrapped;
+  }
+  return wrapped;
+}</code></pre>
+      <p>
+        This function takes an input frequency <code>f</code> and computes how it appears once the signal is sampled at frequency <code>fs</code>.
+        The basic idea is that after sampling, frequencies are only distinguishable inside the Nyquist band:
+      </p>
+      <div class="formula">0 ≤ f_observed ≤ f_s / 2</div>
+      <p>
+        The function works in two stages:
+      </p>
+      <ol>
+        <li>It first wraps the frequency modulo <code>fs</code>, because sampled spectra repeat every sampling frequency.</li>
+        <li>If the wrapped value lies above <code>fs/2</code>, it reflects it back into the Nyquist interval.</li>
+      </ol>
+      <p>
+        So if <code>fs = 16 Hz</code> and the input contains <code>11 Hz</code>, then the function returns <code>5 Hz</code>, which matches the familiar aliasing rule.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">FFT Preparation</span>
+      <h2><code>IsPowerOfTwo</code> and <code>NextPowerOfTwo</code></h2>
+      <pre><code>bool IsPowerOfTwo(int n) {
+  return n &gt; 0 &amp;&amp; (n &amp; (n - 1)) == 0;
+}</code></pre>
+      <p>
+        This function checks whether the number of samples is a power of two. The bit trick
+        <code>(n &amp; (n - 1)) == 0</code> is true only for numbers like 8, 16, 32, 64, and so on.
+      </p>
+      <pre><code>int NextPowerOfTwo(int n) {
+  int power = 1;
+  while (power &lt; n) {
+    power &lt;&lt;= 1;
+  }
+  return power;
+}</code></pre>
+      <p>
+        The FFT implementation used in this macro is a radix-2 FFT. That algorithm requires a number of samples of the form
+        <code>N = 2^m</code>. If the user-selected duration and sampling frequency produce a different <code>N</code>, this helper raises it to the next valid power of two.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Direct Transform</span>
+      <h2><code>ComputeNaiveDFT</code>: the literal DFT formula</h2>
+      <pre><code>for (int k = 0; k &lt; n; ++k) {
+  std::complex&lt;double&gt; sum(0.0, 0.0);
+  for (int m = 0; m &lt; n; ++m) {
+    const double angle = -2.0 * kPi * k * m / n;
+    sum += samples[m] * std::complex&lt;double&gt;(std::cos(angle), std::sin(angle));
+  }
+  spectrum[k] = sum;
+}</code></pre>
+      <p>
+        This function implements the DFT directly from its mathematical definition:
+      </p>
+      <div class="formula">X[k] = Σ x[m] exp(-i 2π k m / N)</div>
+      <p>
+        There are two nested loops:
+      </p>
+      <ul>
+        <li>The outer loop chooses the Fourier bin <code>k</code>.</li>
+        <li>The inner loop sums the contribution of every sample <code>x[m]</code>.</li>
+      </ul>
+      <p>
+        This is the most transparent way to compute the DFT, because it matches the formula exactly.
+        It is also slow for large <code>N</code>, because it needs roughly <code>N²</code> complex operations.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Direct Inverse</span>
+      <h2><code>ComputeInverseDFT</code>: reconstructing the sampled signal</h2>
+      <pre><code>for (int m = 0; m &lt; n; ++m) {
+  std::complex&lt;double&gt; sum(0.0, 0.0);
+  for (int k = 0; k &lt; n; ++k) {
+    const double angle = 2.0 * kPi * k * m / n;
+    sum += spectrum[k] * std::complex&lt;double&gt;(std::cos(angle), std::sin(angle));
+  }
+  reconstructed[m] = sum.real() / n;
+}</code></pre>
+      <p>
+        This is the inverse DFT:
+      </p>
+      <div class="formula">x[m] = (1 / N) Σ X[k] exp(+i 2π k m / N)</div>
+      <p>
+        The sign in the exponential changes, and the final result is divided by <code>N</code>.
+        The macro keeps only the real part because the original input signal is real-valued.
+      </p>
+      <p>
+        The purpose of this function is didactic: it demonstrates that if the transform is computed correctly,
+        the original sampled sequence can be reconstructed from its Fourier coefficients.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Fast Transform</span>
+      <h2><code>ComputeFFT</code>: the radix-2 Cooley-Tukey style algorithm</h2>
+      <p>
+        This function computes the same mathematical object as the DFT, but much faster.
+        Its output is still the Fourier spectrum <code>X[k]</code>. The only difference is the algorithmic strategy.
+      </p>
+
+      <h3>Step 1: promote real samples to complex numbers</h3>
+      <pre><code>for (int i = 0; i &lt; n; ++i) {
+  spectrum[i] = std::complex&lt;double&gt;(samples[i], 0.0);
+}</code></pre>
+      <p>
+        FFT butterflies act naturally on complex numbers, so the code first stores each real sample as a complex number with zero imaginary part.
+      </p>
+
+      <h3>Step 2: bit-reversal reordering</h3>
+      <pre><code>int j = 0;
+for (int i = 1; i &lt; n; ++i) {
+  int bit = n &gt;&gt; 1;
+  while (j &amp; bit) {
+    j ^= bit;
+    bit &gt;&gt;= 1;
+  }
+  j ^= bit;
+  if (i &lt; j) {
+    std::swap(spectrum[i], spectrum[j]);
+  }
+}</code></pre>
+      <p>
+        This is the permutation stage required by the iterative radix-2 FFT.
+        The array is reordered into bit-reversed order so that later butterfly combinations can be performed in place.
+      </p>
+
+      <h3>Step 3: butterfly stages</h3>
+      <pre><code>for (int len = 2; len &lt;= n; len &lt;&lt;= 1) {
+  const double angle = -2.0 * kPi / len;
+  const std::complex&lt;double&gt; wLen(std::cos(angle), std::sin(angle));
+  for (int i = 0; i &lt; n; i += len) {
+    std::complex&lt;double&gt; w(1.0, 0.0);
+    for (int k = 0; k &lt; len / 2; ++k) {
+      const std::complex&lt;double&gt; u = spectrum[i + k];
+      const std::complex&lt;double&gt; v = spectrum[i + k + len / 2] * w;
+      spectrum[i + k] = u + v;
+      spectrum[i + k + len / 2] = u - v;
+      w *= wLen;
+    }
+  }
+}</code></pre>
+      <p>
+        This is the heart of the FFT. The transform is built progressively by combining small transforms into larger ones.
+        At each stage, pairs of values are mixed by the so-called butterfly operations.
+      </p>
+      <p>
+        Because each stage reuses results from previous stages, the algorithm reduces the cost from
+        <code>O(N²)</code> to <code>O(N log N)</code>.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Fast Inverse</span>
+      <h2><code>ComputeInverseFFT</code>: inverse transform using conjugation</h2>
+      <p>
+        The inverse FFT is implemented by reusing the forward FFT structure. The key identity is:
+      </p>
+      <div class="formula">IFFT(X) = (1 / N) conj( FFT( conj(X) ) )</div>
+      <p>
+        That is exactly what this function does:
+      </p>
+      <ol>
+        <li>Copy the spectrum.</li>
+        <li>Conjugate every complex number.</li>
+        <li>Run the same radix-2 machinery.</li>
+        <li>Conjugate again and divide by <code>N</code>.</li>
+      </ol>
+      <p>
+        As in the inverse DFT case, the code returns only the real part because the original signal is real.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Spectrum Scaling</span>
+      <h2><code>BuildAmplitudeSpectrum</code>: converting complex coefficients into plotted amplitudes</h2>
+      <pre><code>const int nPositive = n / 2 + 1;
+...
+double scale = 2.0 / n;
+if (k == 0 || (n % 2 == 0 &amp;&amp; k == n / 2)) {
+  scale = 1.0 / n;
+}
+amplitudes[k] = scale * std::abs(spectrum[k]);</code></pre>
+      <p>
+        The DFT and FFT return complex coefficients. To plot a magnitude spectrum, the macro takes the absolute value
+        <code>|X[k]|</code> and applies a scaling factor.
+      </p>
+      <p>
+        For a real signal, positive and negative frequency components come in symmetric pairs, so for most bins the amplitude is doubled.
+        The exceptions are:
+      </p>
+      <ul>
+        <li><code>k = 0</code>, the DC component,</li>
+        <li>the Nyquist bin when <code>N</code> is even.</li>
+      </ul>
+      <p>
+        Those do not have a distinct mirrored partner, so they are not doubled.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">ROOT Helper</span>
+      <h2><code>MakeGraph</code>: reducing repetitive plotting code</h2>
+      <pre><code>TGraph* MakeGraph(const std::vector&lt;double&gt;&amp; x,
+                  const std::vector&lt;double&gt;&amp; y,
+                  int color,
+                  int width,
+                  int style = 1,
+                  int markerStyle = 0,
+                  double markerSize = 0.0)</code></pre>
+      <p>
+        This helper packages a common ROOT pattern: create a <code>TGraph</code>, set line color, line width,
+        line style, and optionally marker style. Without this function, the main plotting block would be much more repetitive.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Range Helpers</span>
+      <h2><code>FindMaxAbs</code> and <code>FindMax</code></h2>
+      <p>
+        These two functions scan vectors to determine sensible vertical axis limits.
+        <code>FindMaxAbs</code> is used for time-domain signals because the signal oscillates above and below zero.
+        <code>FindMax</code> is used for spectra because plotted amplitudes are non-negative.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Main Routine</span>
+      <h2><code>sampling_dft_fft_alias_macro()</code>: the execution flow</h2>
+      <pre><code>void sampling_dft_fft_alias_macro() {
+  gStyle->SetOptStat(0);
+  ...
+}</code></pre>
+      <p>
+        This is the entry point of the macro. ROOT will execute this function when the macro is run.
+        The first line disables the default statistics box that ROOT often draws on plots. That keeps the canvas clean.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">User Input</span>
+      <h2>Collecting the physical parameters</h2>
+      <pre><code>int nFreq = 0;
+std::cout &lt;&lt; "Number of sinusoidal frequencies..." ;
+std::cin &gt;&gt; nFreq;</code></pre>
+      <p>
+        The macro begins by asking how many frequencies the continuous signal should contain.
+        It then loops over those entries and stores them in <code>inputFreqs</code>.
+      </p>
+      <pre><code>double samplingFrequency = 0.0;
+std::cout &lt;&lt; "Sampling frequency fs [Hz]: ";
+std::cin &gt;&gt; samplingFrequency;</code></pre>
+      <p>
+        This is the key quantity that determines the time spacing:
+      </p>
+      <div class="formula">Δt = 1 / f_s</div>
+      <pre><code>double duration = 0.0;
+std::cout &lt;&lt; "Total signal duration T [s]: ";
+std::cin &gt;&gt; duration;</code></pre>
+      <p>
+        The duration determines how long the signal is observed. Together with the sampling frequency, it determines the number of samples:
+      </p>
+      <div class="formula">N ≈ T f_s</div>
+      <p>
+        The code also checks for invalid inputs and exits early if the user provides nonsense values such as negative frequencies or non-positive duration.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Sample Count</span>
+      <h2>Choosing <code>N</code> and adapting it for the FFT</h2>
+      <pre><code>int nSamples = static_cast&lt;int&gt;(std::lround(duration * samplingFrequency));</code></pre>
+      <p>
+        This estimates the number of uniformly spaced samples that fit into the requested duration.
+        The code then requires at least 8 samples, which is a very modest lower bound to avoid degenerate cases.
+      </p>
+      <pre><code>if (!IsPowerOfTwo(nSamples)) {
+  const int requestedSamples = nSamples;
+  nSamples = NextPowerOfTwo(nSamples);
+  ...
+}</code></pre>
+      <p>
+        If the result is not a power of two, the code increases <code>N</code> to the next valid radix-2 size.
+        This slightly changes the effective sampled duration because the time step remains fixed while the number of points changes.
+      </p>
+      <p class="note">
+        This is an important implementation detail: the macro prioritizes compatibility with the radix-2 FFT over keeping the originally implied duration exact.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Sampling Summary</span>
+      <h2>Computing the central sampling quantities</h2>
+      <pre><code>const double dt = 1.0 / samplingFrequency;
+const double nyquistFrequency = samplingFrequency / 2.0;
+const double effectiveDuration = static_cast&lt;double&gt;(nSamples) * dt;</code></pre>
+      <p>
+        These are the three central sampling outputs:
+      </p>
+      <ul>
+        <li><code>dt</code>: spacing between consecutive samples.</li>
+        <li><code>nyquistFrequency</code>: highest frequency that can be represented without ambiguity.</li>
+        <li><code>effectiveDuration</code>: actual duration of the sampled record after any power-of-two adjustment.</li>
+      </ul>
+      <p>
+        The macro prints all of this to the terminal so the user can immediately see the numerical setup.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Aliasing Report</span>
+      <h2>Checking which frequencies survive faithfully</h2>
+      <pre><code>for (double f : inputFreqs) {
+  const double alias = AliasFrequency(f, samplingFrequency);
+  const bool aliased = f &gt; nyquistFrequency;
+  ...
+}</code></pre>
+      <p>
+        This loop compares each original input frequency to the Nyquist frequency.
+        If the original frequency is larger than <code>f_N</code>, the macro reports the folded-back frequency.
+        Otherwise it reports that the component remains observable at its original value.
+      </p>
+      <p>
+        This is pedagogically important: the macro distinguishes between the true physical content of the original signal and the frequency content that the sampled data is capable of representing.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Continuous and Sampled Data</span>
+      <h2>Creating two time representations of the same signal</h2>
+      <h3>Dense continuous-looking curve</h3>
+      <pre><code>const int nContinuousPoints = std::max(2000, 20 * nSamples);
+...
+signalContinuous.push_back(SignalValue(t, inputFreqs));</code></pre>
+      <p>
+        The macro builds a dense set of points to mimic the appearance of a continuous signal in the first plot.
+        This is only for visualization. It is not the sampled dataset used for the Fourier analysis.
+      </p>
+
+      <h3>Actual sampled sequence</h3>
+      <pre><code>for (int n = 0; n &lt; nSamples; ++n) {
+  timeSamples[n] = n * dt;
+  sampledSignal[n] = SignalValue(timeSamples[n], inputFreqs);
+}</code></pre>
+      <p>
+        This is the actual discretized signal. These are the points used by both the DFT and the FFT.
+        Each sample lies on a uniform time grid.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Timing</span>
+      <h2>Measuring the cost of each transform</h2>
+      <pre><code>const auto dftStart = std::chrono::high_resolution_clock::now();
+...
+const auto dftStop = std::chrono::high_resolution_clock::now();</code></pre>
+      <p>
+        The code uses <code>std::chrono::high_resolution_clock</code> to measure elapsed wall-clock time.
+        It times not only the forward transform, but also the inverse reconstruction, so each method is measured as a full transform-and-rebuild cycle.
+      </p>
+      <pre><code>const std::chrono::duration&lt;double, std::milli&gt; dftTime = dftStop - dftStart;
+const std::chrono::duration&lt;double, std::milli&gt; fftTime = fftStop - fftStart;</code></pre>
+      <p>
+        The output is given in milliseconds. This helps illustrate the main practical reason FFTs are important.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Frequency Axis</span>
+      <h2>From bin index to physical frequency</h2>
+      <pre><code>for (std::size_t k = 0; k &lt; freqAxis.size(); ++k) {
+  freqAxis[k] = static_cast&lt;double&gt;(k) * samplingFrequency / static_cast&lt;double&gt;(nSamples);
+}</code></pre>
+      <p>
+        The transform naturally produces indices <code>k = 0, 1, 2, ...</code>. To plot a physically meaningful spectrum,
+        the code converts those indices into frequencies:
+      </p>
+      <div class="formula">f_k = k f_s / N</div>
+      <p>
+        This is the discrete frequency grid associated with a uniformly sampled record.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Reference Frequencies</span>
+      <h2>Preparing the “true” and aliased markers</h2>
+      <pre><code>std::vector&lt;double&gt; theoreticalFreqs = inputFreqs;
+std::vector&lt;double&gt; aliasedFreqs(inputFreqs.size(), 0.0);
+...
+aliasedFreqs[i] = AliasFrequency(inputFreqs[i], samplingFrequency);</code></pre>
+      <p>
+        The macro prepares two parallel lists:
+      </p>
+      <ul>
+        <li>the original physical frequencies entered by the user,</li>
+        <li>the frequencies that would be observed after sampling.</li>
+      </ul>
+      <p>
+        These are plotted in the upper-right panel to show aliasing geometrically.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Canvas Layout</span>
+      <h2>Why the canvas is divided into 2 columns and 3 rows</h2>
+      <pre><code>auto* canvas = new TCanvas(...);
+canvas-&gt;Divide(2, 3);</code></pre>
+      <p>
+        The macro uses six panels to show the same story from complementary angles.
+      </p>
+      <table>
+        <thead>
+          <tr>
+            <th>Pad</th>
+            <th>Content</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Continuous input + sampled points</td>
+            <td>Shows what the original signal looks like and how it is discretized.</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Original frequencies, aliased frequencies, Nyquist line</td>
+            <td>Explains which frequencies are physically present and which are observable after sampling.</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Reconstruction from direct DFT</td>
+            <td>Shows that the explicit DFT and inverse DFT recover the sampled sequence.</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Magnitude spectrum from direct DFT</td>
+            <td>Displays the frequency content as computed by the slow exact formula.</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Reconstruction from FFT</td>
+            <td>Shows that the FFT-based route recovers the same sampled signal.</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Magnitude spectrum from FFT</td>
+            <td>Lets the user compare the FFT result directly with the DFT spectrum.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <span class="eyebrow">Axis Scaling</span>
+      <h2>How the code chooses vertical ranges</h2>
+      <pre><code>const double timeMax = 1.2 * std::max({...});
+const double freqMax = 1.25 * std::max({...});</code></pre>
+      <p>
+        These lines choose plot ranges automatically. The code finds the largest absolute time-domain value and the largest spectral amplitude,
+        then adds some margin so the curves do not sit directly on the frame edges.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Pad 1</span>
+      <h2>Input signal in the time domain</h2>
+      <p>
+        The first pad overlays:
+      </p>
+      <ul>
+        <li>a smooth blue line for the dense “continuous” curve,</li>
+        <li>red markers for the actual sampled points.</li>
+      </ul>
+      <p>
+        This lets the user visually compare the continuous signal to the discrete sampling lattice.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Pad 2</span>
+      <h2>Input and aliased frequencies</h2>
+      <p>
+        The second pad is not a computed spectrum. It is a conceptual diagram.
+        The code draws:
+      </p>
+      <ul>
+        <li>blue vertical lines and markers for the original frequencies,</li>
+        <li>red dashed vertical lines and markers for the aliased frequencies,</li>
+        <li>a green dashed line at the Nyquist frequency.</li>
+      </ul>
+      <p>
+        This panel is especially useful because it separates the physical signal definition from the numerical observation process.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Pads 3 and 5</span>
+      <h2>Reconstructed time-domain signals</h2>
+      <p>
+        The third and fifth pads compare the sampled signal with the sequence reconstructed from:
+      </p>
+      <ul>
+        <li>the direct DFT,</li>
+        <li>the FFT.</li>
+      </ul>
+      <p>
+        If everything is implemented correctly, the reconstructed curves should lie on top of the sampled data.
+        This is a strong internal consistency check.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Pads 4 and 6</span>
+      <h2>Frequency-domain spectra</h2>
+      <p>
+        The fourth and sixth pads plot the amplitude spectra from the two methods.
+        The x-axis is limited to the interval from 0 to the Nyquist frequency:
+      </p>
+      <div class="formula">0 ≤ f ≤ f_s / 2</div>
+      <p>
+        That is the physically meaningful one-sided spectrum for a real-valued sampled signal.
+        In a correct implementation, the DFT and FFT panels should match.
+      </p>
+    </section>
+
+    <section>
+      <span class="eyebrow">Educational Meaning</span>
+      <h2>What the macro demonstrates as a scientific computing exercise</h2>
+      <div class="two-col">
+        <div>
+          <h3>Sampling theory</h3>
+          <p>The macro makes the Nyquist limit concrete by forcing the user to choose <code>f_s</code> and then showing the consequence for each input frequency.</p>
+        </div>
+        <div>
+          <h3>Aliasing</h3>
+          <p>Frequencies above Nyquist do not simply disappear. They reappear at lower frequencies and can be mistaken for genuine low-frequency structure.</p>
+        </div>
+        <div>
+          <h3>DFT</h3>
+          <p>The explicit DFT exposes the exact formula and reminds the user what the transform really is mathematically.</p>
+        </div>
+        <div>
+          <h3>FFT</h3>
+          <p>The FFT shows that the same result can be obtained much more efficiently by exploiting structure in the problem.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <span class="eyebrow">Limitations</span>
+      <h2>Important details that are worth noticing</h2>
+      <ul>
+        <li>The signal uses only unit-amplitude sine waves with zero phase.</li>
+        <li>The FFT implementation requires a power-of-two sample count.</li>
+        <li>If the sample count is adjusted upward, the effective duration changes.</li>
+        <li>The plotted frequency markers in the upper-right panel are conceptual markers, not measured spectral amplitudes.</li>
+        <li>The code plots only the one-sided amplitude spectrum, which is appropriate for real signals.</li>
+      </ul>
+    </section>
+
+    <section>
+      <span class="eyebrow">Summary</span>
+      <h2>One concise interpretation of the whole macro</h2>
+      <p>
+        The macro is a compact teaching laboratory for the full chain
+        <code>continuous signal → sampling → Nyquist limit → aliasing → DFT → FFT → visualization</code>.
+        Its strongest feature is that it does not only compute spectra: it also explains, through its output and canvas layout,
+        why those spectra look the way they do.
+      </p>
+      <p class="footer">
+        Explained source file:
+        <code>/home/annat/ScientificComputing/HomeWork4/test1/sampling_dft_fft_alias_macro.C</code>
+      </p>
+    </section>
+  </main>
+</body>
+</html>

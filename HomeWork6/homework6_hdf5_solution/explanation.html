@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HomeWork 6 HDF5 Solution Walkthrough</title>
+  <style>
+    :root {
+      --bg: #f6f3eb;
+      --paper: #fffdf8;
+      --ink: #1e2a32;
+      --muted: #58656f;
+      --accent: #0d5c63;
+      --accent-soft: #dceeed;
+      --line: #d6d0c4;
+      --code: #f1eee6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at top right, #d9efe9 0, transparent 30%),
+        linear-gradient(180deg, #f7f3ea 0%, #efe7d7 100%);
+      color: var(--ink);
+      line-height: 1.7;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 20px 80px;
+    }
+
+    header {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 14px 30px rgba(30, 42, 50, 0.08);
+    }
+
+    h1, h2, h3 {
+      font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+      line-height: 1.2;
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: 2.3rem;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+
+    section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 28px;
+      margin-top: 22px;
+      box-shadow: 0 14px 30px rgba(30, 42, 50, 0.05);
+    }
+
+    p, li {
+      font-size: 1.05rem;
+    }
+
+    .lead {
+      font-size: 1.14rem;
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    .callout {
+      background: var(--accent-soft);
+      border-left: 5px solid var(--accent);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin: 18px 0;
+    }
+
+    code, pre {
+      font-family: "Courier New", Courier, monospace;
+    }
+
+    pre {
+      background: var(--code);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 16px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .card {
+      background: #fcfaf4;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .step {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      font-size: 0.9rem;
+      letter-spacing: 0.03em;
+    }
+
+    ul {
+      padding-left: 22px;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.96rem;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>HomeWork 6: Chunked DAXPY with HDF5</h1>
+      <p class="lead">
+        This page explains what the C program in <code>main.c</code> is doing, step by step,
+        with the goal of making the logic natural for a physics PhD student who is comfortable
+        with numerical methods but may be less familiar with C software structure.
+      </p>
+    </header>
+
+    <section>
+      <span class="step">Big Picture</span>
+      <h2>What problem is the code solving?</h2>
+      <p>
+        The mathematical operation is
+        <code>d[i] = a * x[i] + y[i]</code>.
+        In numerical linear algebra this is the classical DAXPY pattern:
+        take one vector, multiply it by a scalar, and add another vector.
+      </p>
+      <p>
+        The homework asks for two implementations of the same physics-style array operation:
+        one straightforward loop over all indices, and one chunked version where the vector is
+        processed block by block. After that, the program must check that both approaches give
+        the same answer, compute a sum over each chunk, and store the results in an HDF5 file.
+      </p>
+      <div class="callout">
+        You can think of the chunked version as dividing a long detector signal, grid field, or
+        Monte Carlo data stream into smaller blocks that are easier to inspect, parallelize, or save.
+      </div>
+    </section>
+
+    <section>
+      <span class="step">Step 1</span>
+      <h2>Headers and feature detection</h2>
+      <p>
+        At the beginning of the program, the code includes standard C libraries such as
+        <code>stdio.h</code>, <code>stdlib.h</code>, and <code>math.h</code>.
+        These are used for printing, memory allocation, and numerical checks.
+      </p>
+      <p>
+        It also includes <code>glib.h</code> to parse the configuration file, and then checks
+        whether HDF5 headers are available:
+      </p>
+      <pre><code>#if __has_include(&lt;hdf5/serial/hdf5.h&gt;)
+#include &lt;hdf5/serial/hdf5.h&gt;
+#define HAVE_HDF5 1
+#endif</code></pre>
+      <p>
+        This is a practical software-engineering detail. It lets the same source code compile
+        cleanly whether HDF5 is installed or not.
+      </p>
+    </section>
+
+    <section>
+      <span class="step">Step 2</span>
+      <h2>The two main data structures</h2>
+      <div class="grid">
+        <div class="card">
+          <h3><code>Config</code></h3>
+          <p>
+            This structure stores the input parameters: vector length, chunk size, the scalar
+            <code>a</code>, and the HDF5 file name.
+          </p>
+        </div>
+        <div class="card">
+          <h3><code>DataSet</code></h3>
+          <p>
+            This stores the arrays themselves:
+            <code>x</code>, <code>y</code>, the reference result,
+            the chunked result, the partial chunk sums, and the number of chunks.
+          </p>
+        </div>
+      </div>
+      <p>
+        A useful way to interpret this is:
+        <code>Config</code> contains the experimental settings,
+        while <code>DataSet</code> contains the measured or computed data.
+      </p>
+    </section>
+
+    <section>
+      <span class="step">Step 3</span>
+      <h2>How input is handled</h2>
+      <p>
+        The program supports two modes.
+      </p>
+      <ul>
+        <li>
+          NumericalSum-style interactive mode:
+          it asks for <code>N</code>, <code>a</code>, whether all entries of
+          <code>x</code> are equal, whether all entries of <code>y</code> are equal,
+          the chunk size, and the HDF5 output file.
+        </li>
+        <li>
+          Config-file mode:
+          you run <code>./homework6 --config homework6.cfg</code> and values are read from
+          the text file.
+        </li>
+      </ul>
+      <p>
+        The interactive mode mirrors the earlier course exercise so that the user experience
+        stays familiar. The config mode is useful for reproducibility, since you can save an
+        exact input state and run it again later.
+      </p>
+    </section>
+
+    <section>
+      <span class="step">Step 4</span>
+      <h2>Memory allocation</h2>
+      <p>
+        Once the vector length is known, the function <code>allocate_dataset</code> allocates
+        memory for all arrays. This is necessary because the program does not know in advance
+        how large the vectors will be.
+      </p>
+      <pre><code>data-&gt;x = g_new0(double, config-&gt;vector_length);
+data-&gt;y = g_new0(double, config-&gt;vector_length);
+data-&gt;d_reference = g_new0(double, config-&gt;vector_length);
+data-&gt;d_chunked = g_new0(double, config-&gt;vector_length);</code></pre>
+      <p>
+        In physics language, this is like reserving enough storage for all the degrees of freedom
+        before starting the numerical experiment.
+      </p>
+    </section>
+
+    <section>
+      <span class="step">Step 5</span>
+      <h2>The reference calculation</h2>
+      <p>
+        The function <code>compute_reference</code> performs the direct textbook implementation:
+      </p>
+      <pre><code>for (gsize i = 0; i &lt; config-&gt;vector_length; ++i) {
+    data-&gt;d_reference[i] = config-&gt;alpha * data-&gt;x[i] + data-&gt;y[i];
+    sum += data-&gt;d_reference[i];
+}</code></pre>
+      <p>
+        This is the control calculation. It is the simplest and most transparent version, so it is
+        the one used as a benchmark to validate the chunked approach.
+      </p>
+    </section>
+
+    <section>
+      <span class="step">Step 6</span>
+      <h2>The chunked calculation</h2>
+      <p>
+        The key homework idea appears in <code>compute_chunked</code>. Instead of looping once
+        over the full vector, the code first identifies which chunk it is in, then loops only over
+        the elements of that chunk.
+      </p>
+      <pre><code>for (gsize chunk_index = 0; chunk_index &lt; data-&gt;number_of_chunks; ++chunk_index) {
+    gsize start = chunk_index * config-&gt;chunk_size;
+    gsize end = start + config-&gt;chunk_size;
+    if (end &gt; config-&gt;vector_length) {
+        end = config-&gt;vector_length;
+    }
+    ...
+}</code></pre>
+      <p>
+        The last chunk may be smaller than the others, so the code explicitly truncates
+        <code>end</code> to the actual vector length. This is exactly the numerical edge case
+        discussed in the assignment.
+      </p>
+      <div class="callout">
+        If your total vector has 25 elements and the chunk size is 8, then the chunks are
+        8, 8, 8, and 1 element. That final one-element block must still be handled correctly.
+      </div>
+    </section>
+
+    <section>
+      <span class="step">Step 7</span>
+      <h2>Partial chunk sums</h2>
+      <p>
+        Inside each chunk, the code computes not only the vector values but also a local sum:
+      </p>
+      <pre><code>double partial = 0.0;
+for (gsize i = start; i &lt; end; ++i) {
+    data-&gt;d_chunked[i] = config-&gt;alpha * data-&gt;x[i] + data-&gt;y[i];
+    partial += data-&gt;d_chunked[i];
+}
+data-&gt;partial_chunk_sum[chunk_index] = partial;</code></pre>
+      <p>
+        This is numerically meaningful because it introduces a simple reduction over blocks.
+        In larger scientific codes, this is the same kind of pattern used in domain decomposition,
+        MPI reductions, tiled linear algebra, and cache-aware processing.
+      </p>
+    </section>
+
+    <section>
+      <span class="step">Step 8</span>
+      <h2>Verification and numerical sanity checks</h2>
+      <p>
+        After computing both versions, the program checks:
+      </p>
+      <ul>
+        <li>whether every element of the chunked vector matches the reference vector</li>
+        <li>whether the total sum of all chunk sums matches the reference total</li>
+        <li>what the maximum absolute difference is between the two vectors</li>
+      </ul>
+      <p>
+        This is good scientific computing practice. A faster or more structured algorithm is only
+        useful if it reproduces the correct result within an acceptable tolerance.
+      </p>
+      <pre><code>vectors_match = compare_vectors(..., 1e-12, &amp;max_abs_diff);
+printf("Sums match: %s\n", fabs(reference_sum - chunked_sum) &lt;= 1e-12 ? "YES" : "NO");</code></pre>
+    </section>
+
+    <section>
+      <span class="step">Step 9</span>
+      <h2>Writing the HDF5 output</h2>
+      <p>
+        HDF5 is used because it is a standard scientific format for structured numerical data.
+        The program writes:
+      </p>
+      <ul>
+        <li>the input vectors <code>x</code> and <code>y</code></li>
+        <li>the two output vectors <code>d_reference</code> and <code>d_chunked</code></li>
+        <li>the array <code>partial_chunk_sum</code></li>
+        <li>each chunk of <code>d_chunked</code> separately under the group <code>/chunks</code></li>
+      </ul>
+      <p>
+        This gives you both the global result and the block-by-block structure, which is exactly
+        what the homework requested.
+      </p>
+      <pre><code>chunks_group = H5Gcreate2(file, "/chunks", ...);
+write_double_dataset(file, "partial_chunk_sum", ...);
+write_double_dataset(chunks_group, dataset_name, &amp;data-&gt;d_chunked[start], ...);</code></pre>
+    </section>
+
+    <section>
+      <span class="step">Step 10</span>
+      <h2>Why the program is written in functions</h2>
+      <p>
+        The code is split into small functions rather than written as one very long
+        <code>main</code>. This is not just a software style preference.
+      </p>
+      <ul>
+        <li><code>load_config</code> handles the input file logic</li>
+        <li><code>allocate_dataset</code> handles memory</li>
+        <li><code>compute_reference</code> handles the direct algorithm</li>
+        <li><code>compute_chunked</code> handles the block algorithm</li>
+        <li><code>write_hdf5_output</code> handles storage</li>
+      </ul>
+      <p>
+        This separation makes the program easier to debug, easier to extend, and easier to compare
+        with the mathematical structure of the problem.
+      </p>
+    </section>
+
+    <section>
+      <span class="step">Step 11</span>
+      <h2>How to read the code as a scientist</h2>
+      <p>
+        A helpful reading strategy is:
+      </p>
+      <ul>
+        <li>First read <code>main</code> to understand the overall workflow.</li>
+        <li>Then read <code>compute_reference</code> and <code>compute_chunked</code> to see the numerical core.</li>
+        <li>Then read <code>write_hdf5_output</code> to understand how results are stored.</li>
+        <li>Only after that, look at helper functions such as input parsing and memory cleanup.</li>
+      </ul>
+      <p>
+        This mirrors how one usually approaches a simulation paper: first the physical idea,
+        then the algorithm, then the implementation details.
+      </p>
+    </section>
+
+    <section>
+      <span class="step">Step 12</span>
+      <h2>Files in the solution folder</h2>
+      <div class="grid">
+        <div class="card">
+          <h3><code>main.c</code></h3>
+          <p>The full C implementation.</p>
+        </div>
+        <div class="card">
+          <h3><code>Makefile</code></h3>
+          <p>Build commands and shortcuts for running the program.</p>
+        </div>
+        <div class="card">
+          <h3><code>homework6.cfg</code></h3>
+          <p>An example configuration file for reproducible runs.</p>
+        </div>
+        <div class="card">
+          <h3><code>results.h5</code></h3>
+          <p>A sample HDF5 output generated by the code.</p>
+        </div>
+      </div>
+      <p class="footer-note">
+        If you want, this HTML explanation can be extended further with line-by-line references
+        to the exact functions in <code>main.c</code> or with diagrams of how chunks map onto the vector.
+      </p>
+    </section>
+  </main>
+</body>
+</html>
