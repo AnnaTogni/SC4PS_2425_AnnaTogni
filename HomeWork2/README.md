@@ -1,6 +1,6 @@
 # HomeWork 02: vector sum d = a·x + y
 
-Numerical computing's "Hello World": `NumericalSum_v2.c` computes **d = a·x + y**.
+Numerical computing's "Hello World": `NumericalSum.c` computes **d = a·x + y**.
 - **a** is a scalar.
 - **x** and **y** are vectors of dimension N in which all elements are equal.
 
@@ -8,16 +8,16 @@ The program then checks that every element of **d** has the expected value.
 
 | File | Content |
 |---|---|
-| `NumericalSum_v2.c` | Solution of the homework (current version) |
-| `Makefile` | Builds `numericalsum_v2` |
-| `NumericalSum.c` | First version, kept for reference |
+| `NumericalSum.c` | Solution of the homework (current version) |
+| `Makefile` | Builds `numericalsum` |
+| `NumericalSum_old.c` | First version, kept for reference |
 | `CHANGES.md` | What changed between the two versions, and why |
 
 ## Build and run
 
 ```bash
 make
-./numericalsum_v2 N a x y [expected]
+./numericalsum N a x y [expected]
 ```
 
 | Argument | Meaning |
@@ -29,7 +29,7 @@ make
 
 Example (point 4 of the assignment):
 ```bash
-./numericalsum_v2 1e8 3 0.1 7.1 7.4
+./numericalsum 1e8 3 0.1 7.1 7.4
 ```
 
 The program:
@@ -57,7 +57,7 @@ Yes, at **N = 10⁸**. The three vectors of `double` (8 bytes each) need
 - On a machine or VM with little memory, `malloc` fails, or the system kills the process.
   The program now checks the result of `malloc` and stops with a clear error message.
 - Printing every element (as the first version did) writes 10⁸ lines, about 2 GB of text, and
-  takes far longer than the computation itself. Version 2 prints only the first elements and
+  takes far longer than the computation itself. The new version prints only the first elements and
   checks the rest automatically.
 
 ### Were you able to test the sum and product of point 4 correctly?
