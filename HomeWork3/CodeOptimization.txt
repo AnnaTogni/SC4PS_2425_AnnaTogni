@@ -1,3 +1,0 @@
-To optimize the code:
- - loop ordering -- change the way in with you loop over the code so that it's "easier" to find the needed value.
- - avoid multiple if condition
