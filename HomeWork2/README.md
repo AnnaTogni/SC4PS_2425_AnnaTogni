@@ -45,9 +45,9 @@ memory, and `2` if a check fails.
 
 | N | Memory (3 vectors) | Time of the loop | Check 1 | `d == 7.4` | Within tolerance |
 |---|---|---|---|---|---|
-| 10 | ~0 MB | ~0 s | O | X | O |
-| 10⁶ | 24 MB | ~3 ms | O | X | O |
-| 10⁸ | 2.4 GB | ~0.4 s | O | X | O |
+| 10 | ~0 MB | ~0 s | $\color{green}{\textbf{O}}$ | $\color{red}{\textbf{X}}$ | $\color{green}{\textbf{O}}$ |
+| 10⁶ | 24 MB | ~3 ms | $\color{green}{\textbf{O}}$ | $\color{red}{\textbf{X}}$ | $\color{green}{\textbf{O}}$ |
+| 10⁸ | 2.4 GB | ~0.4 s | $\color{green}{\textbf{O}}$ | $\color{red}{\textbf{X}}$ | $\color{green}{\textbf{O}}$ |
 
 ### Did you find any problems running the code for some N?
 Yes, at **N = 10⁸**. The three vectors of `double` (8 bytes each) need

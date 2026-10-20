@@ -76,12 +76,12 @@ Results with N = 1000 (`-O3`, this PC):
 
 | Ordering | Time [s] | GFLOP/s | Innermost loop walks along… |
 |---|---|---|---|
-| **ikj** | **0.39** | **5.1** | a row of B and a row of C: contiguous O |
-| **kij** | 0.42 | 4.7 | a row of B and a row of C: contiguous O |
+| **ikj** | **0.39** | **5.1** | a row of B and a row of C: contiguous $\color{green}{\textbf{O}}$ |
+| **kij** | 0.42 | 4.7 | a row of B and a row of C: contiguous $\color{green}{\textbf{O}}$ |
 | jik | 1.08 | 1.9 | a row of A (contiguous) and a column of B (strided) |
 | ijk | 1.19 | 1.7 | a row of A (contiguous) and a column of B (strided) |
-| kji | 7.69 | 0.26 | a column of A and a column of C: strided X |
-| jki | 7.73 | 0.26 | a column of A and a column of C: strided X |
+| kji | 7.69 | 0.26 | a column of A and a column of C: strided $\color{red}{\textbf{X}}$ |
+| jki | 7.73 | 0.26 | a column of A and a column of C: strided $\color{red}{\textbf{X}}$ |
 
 **ikj / kij are fastest, about 20× faster than jki / kji.**
 
