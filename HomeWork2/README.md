@@ -8,7 +8,7 @@ The program then checks that every element of **d** has the expected value.
 
 | File | Content |
 |---|---|
-| `NumericalSum.c` | Solution of the homework (current version) |
+| `NumericalSum.c` | Solution of the homework2 |
 | `Makefile` | Builds `numericalsum` and prints how to use it (`make help` prints it again) |
 
 ## Build and run
