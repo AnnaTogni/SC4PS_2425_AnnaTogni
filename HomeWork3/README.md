@@ -72,7 +72,7 @@ check is negligible for large N.
 The three loops `i, j, k` can be nested in 6 orders. The arithmetic is identical; only the
 **order in which memory is visited** changes.
 
-Results with N = 1000 (`-O3`, this PC):
+Results with N = 1000 (`-O3`, my PC):
 
 | Ordering | Time [s] | GFLOP/s | Innermost loop walks along… |
 |---|---|---|---|
