@@ -1,4 +1,4 @@
-// HomeWork2 -- new version (the first one is NumericalSum_old.c)
+// HomeWork2
 //
 // Addition of two vectors : d = a*x + y
 //   a     : scalar

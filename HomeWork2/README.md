@@ -10,8 +10,6 @@ The program then checks that every element of **d** has the expected value.
 |---|---|
 | `NumericalSum.c` | Solution of the homework (current version) |
 | `Makefile` | Builds `numericalsum` and prints how to use it (`make help` prints it again) |
-| `NumericalSum_old.c` | First version, kept for reference |
-| `CHANGES.md` | What changed between the two versions, and why |
 
 ## Build and run
 
@@ -47,9 +45,9 @@ memory, and `2` if a check fails.
 
 | N | Memory (3 vectors) | Time of the loop | Check 1 | `d == 7.4` | Within tolerance |
 |---|---|---|---|---|---|
-| 10 | ~0 MB | ~0 s | ✅ | ❌ | ✅ |
-| 10⁶ | 24 MB | ~3 ms | ✅ | ❌ | ✅ |
-| 10⁸ | 2.4 GB | ~0.4 s | ✅ | ❌ | ✅ |
+| 10 | ~0 MB | ~0 s | O | X | O |
+| 10⁶ | 24 MB | ~3 ms | O | X | O |
+| 10⁸ | 2.4 GB | ~0.4 s | O | X | O |
 
 ### Did you find any problems running the code for some N?
 Yes, at **N = 10⁸**. The three vectors of `double` (8 bytes each) need
