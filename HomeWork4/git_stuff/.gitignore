@@ -1,5 +1,0 @@
-# Generated directories: binaries, CSV data, plots, and local matplotlib cache.
-build/
-output/
-plots/
-.mplconfig/

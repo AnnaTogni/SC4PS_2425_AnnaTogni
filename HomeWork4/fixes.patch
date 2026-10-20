@@ -1,0 +1,145 @@
+diff --git a/scripts/plot_coupled_oscillators.py b/scripts/plot_coupled_oscillators.py
+index 883db34..1b0a129 100644
+--- a/scripts/plot_coupled_oscillators.py
++++ b/scripts/plot_coupled_oscillators.py
+@@ -13,7 +13,6 @@ possible.
+ from __future__ import annotations
+ 
+ import csv
+-import math
+ from pathlib import Path
+ 
+ ROOT = Path(__file__).resolve().parent.parent
+@@ -92,11 +91,12 @@ def plot_spectrum() -> None:
+     frequency_hz, amplitude = read_csv_columns(
+         OUTPUT_DIR / "coupled_oscillators_spectrum.csv"
+     )
+-    mass = 1.0
+-    wall_k = 25.0
+-    coupling_k = 7.0
+-    in_phase_hz = math.sqrt(wall_k / mass) / (2.0 * math.pi)
+-    out_of_phase_hz = math.sqrt((wall_k + 2.0 * coupling_k) / mass) / (2.0 * math.pi)
++    # Theoretical frequencies written by the C program, so that they always
++    # match the parameters actually used in the simulation.
++    with (OUTPUT_DIR / "coupled_oscillators_modes.csv").open(newline="", encoding="utf-8") as handle:
++        modes = {row["mode"]: float(row["frequency_hz"]) for row in csv.DictReader(handle)}
++    in_phase_hz = modes["in_phase"]
++    out_of_phase_hz = modes["out_of_phase"]
+ 
+     fig, axis = plt.subplots(figsize=(14, 5), constrained_layout=True)
+     axis.plot(frequency_hz, amplitude, linewidth=1.8, label="FFT amplitude")
+diff --git a/scripts/plot_sampling.gp b/scripts/plot_sampling.gp
+index dae3e2a..98f5b0a 100644
+--- a/scripts/plot_sampling.gp
++++ b/scripts/plot_sampling.gp
+@@ -23,17 +23,24 @@ system "mkdir -p plots"
+ set output "plots/sampling_signals.png"
+ set multiplot layout 3,1 rowsfirst title "Sampling demo: time-domain signals"
+ 
++# Show only the first 0.1 s: over the full record the oscillations are too
++# dense to see anything. Every sample is plotted, as points joined by lines.
++set xrange [0:0.1]
++
+ # Good sampling: both true frequencies are below Nyquist.
+ set title "Good sampling: 50 Hz and 120 Hz resolved correctly"
+-plot "output/good_sampling_signal.csv" using 1:2 every 2 with lines lw 2 title "signal(t)"
++plot "output/good_sampling_signal.csv" using 1:2 with linespoints lw 2 pt 7 ps 0.5 title "samples"
+ 
+-# Undersampling: the 120 Hz component is aliased.
++# Undersampling: the 120 Hz component is aliased. A longer window (0.5 s)
++# shows a few periods of the false 8 Hz oscillation.
++set xrange [0:0.5]
+ set title "Undersampled: 120 Hz aliases to about 8 Hz"
+-plot "output/undersampled_signal.csv" using 1:2 with lines lw 2 title "signal(t)"
++plot "output/undersampled_signal.csv" using 1:2 with linespoints lw 2 pt 7 ps 0.5 title "samples"
+ 
+ # Short total duration: the nearby frequencies are not well separated.
+ set title "Short record: nearby frequencies cannot be separated well"
+-plot "output/short_record_signal.csv" using 1:2 with lines lw 2 title "signal(t)"
++set xrange [*:*]
++plot "output/short_record_signal.csv" using 1:2 with linespoints lw 2 pt 7 ps 0.5 title "samples"
+ 
+ unset multiplot
+ 
+diff --git a/src/coupled_oscillators_fft.c b/src/coupled_oscillators_fft.c
+index bc2adbd..1087889 100644
+--- a/src/coupled_oscillators_fft.c
++++ b/src/coupled_oscillators_fft.c
+@@ -127,17 +127,48 @@ static int write_spectrum_csv(const char *path,
+     return 0;
+ }
+ 
++/* Theoretical normal-mode frequencies, read by the plotting scripts. */
++static int write_modes_csv(const char *path, double f_in_phase, double f_out_of_phase)
++{
++    FILE *fp = fopen(path, "w");
++
++    if (fp == NULL) {
++        return -1;
++    }
++
++    fprintf(fp, "mode,frequency_hz\n");
++    fprintf(fp, "in_phase,%.12f\n", f_in_phase);
++    fprintf(fp, "out_of_phase,%.12f\n", f_out_of_phase);
++
++    fclose(fp);
++    return 0;
++}
++
+ static void report_mode_near_frequency(const double *frequencies,
+                                        const double *amplitudes,
+                                        size_t bins,
+                                        double target_frequency_hz,
+                                        const char *label)
+ {
++    const double nyquist_hz = frequencies[bins - 1U];
+     size_t start;
+     size_t stop;
+     size_t best_bin;
+     size_t i;
+ 
++    /*
++     * A mode above the Nyquist frequency cannot be measured: it is aliased to a
++     * lower frequency, and its bin index would be outside the amplitudes array.
++     */
++    if (target_frequency_hz >= nyquist_hz) {
++        printf("  %s: expected %.5f Hz is above the Nyquist frequency %.5f Hz:"
++               " it cannot be measured (aliased), reduce dt\n",
++               label,
++               target_frequency_hz,
++               nyquist_hz);
++        return;
++    }
++
+     /*
+      * Search a few bins around the expected theoretical value. The FFT bins are
+      * discrete, so the measured peak is generally near the theoretical value,
+@@ -183,6 +214,7 @@ int main(int argc, char **argv)
+     double *amplitudes = NULL;
+     char time_series_path[256];
+     char spectrum_path[256];
++    char modes_path[256];
+     gsl_odeiv2_system system = {rhs, NULL, 4, (void *)&params};
+     gsl_odeiv2_driver *driver = NULL;
+     double t = 0.0;
+@@ -275,6 +307,12 @@ int main(int argc, char **argv)
+         goto cleanup;
+     }
+ 
++    snprintf(modes_path, sizeof(modes_path), "%s/coupled_oscillators_modes.csv", output_dir);
++    if (write_modes_csv(modes_path, f_in_phase, f_out_of_phase) != 0) {
++        fprintf(stderr, "failed to write %s\n", modes_path);
++        goto cleanup;
++    }
++
+     printf("Coupled oscillators analyzed with an FFT\n");
+     printf("=======================================\n");
+     printf("mass = %.2f kg, wall spring = %.2f N/m, coupling spring = %.2f N/m\n",
+@@ -291,6 +329,7 @@ int main(int argc, char **argv)
+     report_mode_near_frequency(frequencies, amplitudes, bins, f_out_of_phase, "out-of-phase mode");
+     printf("wrote %s\n", time_series_path);
+     printf("wrote %s\n", spectrum_path);
++    printf("wrote %s\n", modes_path);
+ 
+     status = EXIT_SUCCESS;
+ 
