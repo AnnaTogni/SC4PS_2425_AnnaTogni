@@ -7,7 +7,10 @@
 //
 // For every x the program compares, for l = 0 ... l_max:
 //   - forward recurrence (l increasing) in double precision
-//   - Miller's backward recurrence (l decreasing, from L > l_max) in double
+//   - Miller's backward recurrence (l decreasing, from L > l_max) in double,
+//     normalized with ONE condition (f_0), as in the HomeWork05 text
+//   - for |x| < 1 only: backward recurrence normalized with TWO conditions
+//     (P_0 = 1 and P_1 = x), as in the professor's corrected example (lecture 8)
 // against a reference computed in quad precision (__float128, 113-bit mantissa).
 //
 //   |x| < 1 : the function studied is P_l(x)   (the homework's case)
@@ -83,6 +86,36 @@ static void miller_double(double x, int lmax, int L, double f0, double *f)
     for (int l = 0; l <= lmax; l++)
         f[l] = c * w[l];
     free(w);
+}
+
+// Backward recurrence with TWO normalization conditions f[0] = f0, f[1] = f1.
+// Every solution of the recurrence is a P_l + b Q_l. Two backward runs from independent
+// starts (f_L = 1, f_{L+1} = 0 and f_L = 0, f_{L+1} = 1) span all solutions; the
+// combination c_a A + c_b B with the right f_0 and f_1 is the wanted one.
+// Works when the two solutions have similar size (|x| < 1); for x > 1 the two runs become
+// proportional (both ~ Q_l) and the 2x2 system is singular.
+static void backward_two_conditions_double(double x, int lmax, int L, double f0, double f1,
+                                           double *f)
+{
+    double *a = calloc((size_t)L + 2, sizeof(*a));
+    double *b = calloc((size_t)L + 2, sizeof(*b));
+    if (a == NULL || b == NULL) {
+        fprintf(stderr, "Error: not enough memory\n");
+        exit(1);
+    }
+    a[L] = 1.0; // start A: f_L = 1, f_{L+1} = 0
+    b[L + 1] = 1.0; // start B: f_L = 0, f_{L+1} = 1
+    for (int l = L; l >= 1; l--) {
+        a[l - 1] = ((2.0 * l + 1.0) * x * a[l] - (l + 1.0) * a[l + 1]) / l;
+        b[l - 1] = ((2.0 * l + 1.0) * x * b[l] - (l + 1.0) * b[l + 1]) / l;
+    }
+    double det = a[0] * b[1] - a[1] * b[0];
+    double ca = (f0 * b[1] - f1 * b[0]) / det;
+    double cb = (f1 * a[0] - f0 * a[1]) / det;
+    for (int l = 0; l <= lmax; l++)
+        f[l] = ca * a[l] + cb * b[l];
+    free(a);
+    free(b);
 }
 
 static void miller_quad(quad x, int lmax, int L, quad f0, quad *f)
@@ -163,10 +196,11 @@ static int study(double x, int lmax, int L)
 
     double *fwd = malloc(n * sizeof(*fwd));
     double *bwd = malloc(n * sizeof(*bwd));
+    double *bw2 = malloc(n * sizeof(*bw2));
     double *gsl = malloc(n * sizeof(*gsl));
     double *cond = malloc(n * sizeof(*cond));
     quad *ref = malloc(n * sizeof(*ref));
-    if (!fwd || !bwd || !gsl || !cond || !ref) {
+    if (!fwd || !bwd || !bw2 || !gsl || !cond || !ref) {
         fprintf(stderr, "Error: not enough memory\n");
         exit(1);
     }
@@ -178,6 +212,7 @@ static int study(double x, int lmax, int L)
         fwd[1] = x;
         forward_double(x, lmax, fwd);
         miller_double(x, lmax, L, 1.0, bwd);
+        backward_two_conditions_double(x, lmax, L, 1.0, x, bw2);
         ref[0] = 1;
         ref[1] = xq;
         forward_quad(xq, lmax, ref);
@@ -190,6 +225,8 @@ static int study(double x, int lmax, int L)
         fwd[1] = x * q0 - 1.0;
         forward_double(x, lmax, fwd);
         miller_double(x, lmax, L, q0, bwd);
+        for (int l = 0; l <= lmax; l++)
+            bw2[l] = NAN; // two conditions: singular for x > 1 (see the function)
         miller_quad(xq, lmax, lmax + REF_EXTRA, q0q, ref);
         for (int l = 0; l <= lmax; l++)
             gsl[l] = gsl_sf_legendre_Ql(l, x);
@@ -216,14 +253,18 @@ static int study(double x, int lmax, int L)
         exit(1);
     }
     fprintf(f, "l,x,forward,backward_miller,reference_quad,gsl,abs_err_forward,rel_err_forward,"
-               "abs_err_backward,rel_err_backward,condition_number\n");
+               "abs_err_backward,rel_err_backward,condition_number,backward_two_conditions,"
+               "abs_err_backward2,rel_err_backward2\n");
 
-    double max_abs_f = 0, max_rel_f = 0, max_abs_b = 0, max_rel_b = 0;
+    double max_abs_f = 0, max_rel_f = 0, max_abs_b = 0, max_rel_b = 0, max_abs_2 = 0;
     int gsl_equals_forward = 1;
     for (int l = 0; l <= lmax; l++) {
         double r = (double)ref[l];
         double ea_f = fabs(fwd[l] - r), er_f = rel_err(fwd[l], r);
         double ea_b = fabs(bwd[l] - r), er_b = rel_err(bwd[l], r);
+        double ea_2 = fabs(bw2[l] - r), er_2 = rel_err(bw2[l], r);
+        if (is_P)
+            max_abs_2 = fmax(max_abs_2, ea_2);
         max_abs_f = fmax(max_abs_f, ea_f);
         max_abs_b = fmax(max_abs_b, ea_b);
         if (!isnan(er_f))
@@ -235,18 +276,25 @@ static int study(double x, int lmax, int L)
 
         char refbuf[48];
         quadmath_snprintf(refbuf, sizeof(refbuf), "%.25Qe", ref[l]);
-        fprintf(f, "%d,%.17g,%.17e,%.17e,%s,%.17e,%.6e,%.6e,%.6e,%.6e,%.6e\n", l, x, fwd[l],
-                bwd[l], refbuf, gsl[l], ea_f, er_f, ea_b, er_b, cond[l]);
+        fprintf(f, "%d,%.17g,%.17e,%.17e,%s,%.17e,%.6e,%.6e,%.6e,%.6e,%.6e,%.17e,%.6e,%.6e\n", l,
+                x, fwd[l], bwd[l], refbuf, gsl[l], ea_f, er_f, ea_b, er_b, cond[l], bw2[l],
+                ea_2, er_2);
     }
     fclose(f);
 
     char label[32];
     snprintf(label, sizeof(label), "%s_l(%g)", name, x);
-    printf("%-10s | %9.1e %9.1e | %9.1e %9.1e | %-3s | %s\n", label, max_abs_f, max_rel_f,
-           max_abs_b, max_rel_b, gsl_equals_forward ? "yes" : "no", path);
+    char two[16];
+    if (is_P)
+        snprintf(two, sizeof(two), "%9.1e", max_abs_2);
+    else
+        snprintf(two, sizeof(two), "%9s", "-");
+    printf("%-10s | %9.1e %9.1e | %9.1e %9.1e | %s | %-3s | %s\n", label, max_abs_f, max_rel_f,
+           max_abs_b, max_rel_b, two, gsl_equals_forward ? "yes" : "no", path);
 
     free(fwd);
     free(bwd);
+    free(bw2);
     free(gsl);
     free(cond);
     free(ref);
@@ -303,16 +351,18 @@ int main(int argc, char *argv[])
 
     printf("Legendre recurrence stability: l = 0 ... %d, Miller start L = %d\n", lmax, L);
     printf("Errors against the quad-precision reference (max over l)\n\n");
-    printf("%-10s | %-19s | %-19s | %-3s |\n", "", "     forward", "  backward (Miller)",
-           "GSL");
-    printf("%-10s | %9s %9s | %9s %9s | %-3s | %s\n", "function", "abs err", "rel err", "abs err",
-           "rel err", "=fw", "CSV file");
-    printf("-----------+---------------------+---------------------+-----+---------\n");
+    printf("%-10s | %-19s | %-19s | %-9s | %-3s |\n", "", "     forward", " backward, f_0 only",
+           " bw P0+P1", "GSL");
+    printf("%-10s | %9s %9s | %9s %9s | %9s | %-3s | %s\n", "function", "abs err", "rel err",
+           "abs err", "rel err", "abs err", "=fw", "CSV file");
+    printf("-----------+---------------------+---------------------+-----------+-----+---------\n");
 
     for (size_t i = 0; i < nx; i++)
         study(xs[i], lmax, L);
 
     printf("\n|x| < 1: P_l(x).  x > 1: Q_l(x).  \"GSL =fw\": GSL gives exactly the forward values.\n");
+    printf("\"backward, f_0 only\" = Miller as in the HomeWork05 text; \"bw P0+P1\" = backward\n"
+           "recurrence normalized with P_0 = 1 and P_1 = x, as in the professor's correction.\n");
     free(user_x);
     return 0;
 }

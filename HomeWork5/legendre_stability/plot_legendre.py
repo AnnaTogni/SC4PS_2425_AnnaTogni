@@ -24,7 +24,10 @@ EPS = 2.220446049250313e-16  # double precision machine epsilon
 FLOOR = 1e-18                # errors that are exactly 0 are drawn at this level
 
 FORWARD = dict(color="tab:blue", marker="o", markersize=3, linewidth=1.5, label="forward")
-BACKWARD = dict(color="tab:red", marker="s", markersize=3, linewidth=1.5, label="backward (Miller)")
+BACKWARD = dict(color="tab:red", marker="s", markersize=3, linewidth=1.5,
+                label="backward, Miller ($f_0$ only)")
+BACKWARD2 = dict(color="tab:green", marker="^", markersize=3, linewidth=1.2, linestyle="--",
+                 label="backward, $P_0$ and $P_1$ fixed")
 REFERENCE = dict(color="gray", linewidth=5, alpha=0.5, label="reference (quad)")
 
 
@@ -62,6 +65,8 @@ def error_figure(files, function, filename):
         ax.semilogy(d["l"], abs_or_floor(d["rel_err_forward"]), **FORWARD)
         ax.semilogy(d["l"], abs_or_floor(d["rel_err_backward"]), **BACKWARD)
         if function == "P":
+            ax.semilogy(d["l"], abs_or_floor(d["rel_err_backward2"]), **BACKWARD2)
+        if function == "P":
             # Error that rounding x itself would cause: kappa * eps (conditioning, not the algorithm)
             ax.semilogy(d["l"], abs_or_floor([c * EPS for c in d["condition_number"]]),
                         color="gray", linestyle="--", linewidth=1.2,
@@ -89,6 +94,7 @@ def values_figure(files, filename):
             ax.plot(d["l"], d["reference_quad"], **REFERENCE)
             ax.plot(d["l"], d["forward"], **FORWARD)
             ax.plot(d["l"], d["backward_miller"], **BACKWARD)
+            ax.plot(d["l"], d["backward_two_conditions"], **BACKWARD2)
             ax.set_title(f"$P_\\ell(x)$, x = {d['x'][0]:g}")
         else:
             # Q_l decreases by many orders of magnitude: plot |Q_l| on a log scale
