@@ -11,17 +11,6 @@
 
 #include <gsl/gsl_cdf.h>
 
-gsl_rng *rng_new(unsigned long seed)
-{
-    gsl_rng *r = gsl_rng_alloc(gsl_rng_mt19937);
-    if (r == NULL) {
-        fprintf(stderr, "Error: cannot allocate the random number generator\n");
-        exit(1);
-    }
-    gsl_rng_set(r, seed);
-    return r;
-}
-
 unsigned long arg_ulong(int argc, char *argv[], int i, unsigned long def, const char *name)
 {
     if (i >= argc)
@@ -33,6 +22,20 @@ unsigned long arg_ulong(int argc, char *argv[], int i, unsigned long def, const 
         exit(1);
     }
     return (unsigned long)v;
+}
+
+uint32_t arg_seed(int argc, char *argv[], int i, uint32_t def)
+{
+    if (i >= argc)
+        return def;
+    char *end;
+    double v = strtod(argv[i], &end);
+    if (end == argv[i] || *end != '\0' || v < 0 || v != floor(v) || v > 4294967295.0) {
+        fprintf(stderr, "Error: the seed must be an integer 0 ... 4294967295, got '%s'\n",
+                argv[i]);
+        exit(1);
+    }
+    return (uint32_t)v;
 }
 
 FILE *open_output(const char *name)

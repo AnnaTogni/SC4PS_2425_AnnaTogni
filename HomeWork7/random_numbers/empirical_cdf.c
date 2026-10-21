@@ -9,7 +9,7 @@
 // For a correct sample, sqrt(n) D_n follows the Kolmogorov distribution: it is below
 // 1.36 in 95% of the cases, so D_n shrinks like 1/sqrt(n).
 //
-// Usage: ./empirical_cdf [n] [seed]     (default n = 1e6, seed = 12345)
+// Usage: ./empirical_cdf [n] [seed]     (default n = 200000, seed = 246813579, as Exercise 4)
 // Output: output/empirical_cdf.csv (at most ~2000 points of the step function, for the plot)
 //         output/ks_vs_n.csv       (D_n for n = 10, 100, ..., n)
 
@@ -43,21 +43,21 @@ static double ks_distance(const double *y, unsigned long n, double *where)
 
 int main(int argc, char *argv[])
 {
-    unsigned long n = arg_ulong(argc, argv, 1, 1000000, "n");
-    unsigned long seed = arg_ulong(argc, argv, 2, DEFAULT_SEED, "seed");
+    unsigned long n = arg_ulong(argc, argv, 1, 200000, "n");
+    uint32_t seed = arg_seed(argc, argv, 2, EXPONENTIAL_SEED);
 
     double *y = malloc(n * sizeof(*y));
     if (y == NULL) {
         fprintf(stderr, "Error: not enough memory\n");
         return 1;
     }
-    gsl_rng *r = rng_new(seed);
-    exponential_sample(r, LAMBDA, y, n); // same sample as Exercise 4
+    lcg_t gen = lcg_new(seed);
+    exponential_sample(&gen, LAMBDA, y, n); // same sample as Exercise 4
 
     // D_n for the first 10, 100, ... values of the same sample: how fast F_n -> F
     FILE *g = open_output("ks_vs_n.csv");
     fprintf(g, "n,D_n,sqrt_n_D_n\n");
-    printf("Exercise 5: empirical CDF of the exponential sample (lambda = %.2f, seed %lu)\n\n",
+    printf("Exercise 5: empirical CDF of the exponential sample (lambda = %.2f, seed %u)\n\n",
            LAMBDA, seed);
     printf("%10s %12s %12s\n", "n", "D_n", "sqrt(n) D_n");
     double *tmp = malloc(n * sizeof(*tmp));
@@ -93,6 +93,5 @@ int main(int argc, char *argv[])
     printf("Written %s/empirical_cdf.csv and %s/ks_vs_n.csv\n", OUTPUT_DIR, OUTPUT_DIR);
 
     free(y);
-    gsl_rng_free(r);
     return 0;
 }

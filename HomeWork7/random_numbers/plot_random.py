@@ -7,6 +7,7 @@ Figures for HomeWork7 from the CSV files in output/ (run the five programs first
   plots/square_uniform.png   histogram of Y = U^2 vs f(y) = 1/(2 sqrt(y))
   plots/exponential.png      histogram vs lambda exp(-lambda y), linear and log scale
   plots/empirical_cdf.png    empirical vs exact CDF, their difference, and D_n vs n
+  plots/randu_planes.png     bonus: RANDU's triples on 15 planes vs the notebook LCG
 
 Usage: python3 plot_random.py
 """
@@ -162,6 +163,34 @@ def empirical_cdf():
     save(fig, "empirical_cdf.png")
 
 
+def randu_planes():
+    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401  (registers the 3D projection)
+
+    r, l, comb = read("randu_triples.csv"), read("lcg_triples.csv"), read("plane_combination.csv")
+    fig = plt.figure(figsize=(17, 5.2), constrained_layout=True)
+    fig.suptitle("Bonus: consecutive triples $(u_n, u_{n+1}, u_{n+2})$ -- RANDU vs notebook LCG")
+    for k, (d, name, color) in enumerate(((r, "RANDU", "tab:red"), (l, "notebook LCG", "tab:blue"))):
+        ax = fig.add_subplot(1, 3, k + 1, projection="3d")
+        ax.scatter(d["u0"], d["u1"], d["u2"], s=2, alpha=0.5, color=color)
+        # look along (2, 3, 0), a direction lying in RANDU's planes 9x - 6y + z = k:
+        # the planes are then seen edge-on, as lines
+        ax.view_init(elev=0, azim=math.degrees(math.atan2(3, 2)))
+        ax.set_title(f"{name} (3000 triples, seen along the planes)")
+        ax.set_xlabel("$u_n$")
+        ax.set_ylabel("$u_{n+1}$")
+        ax.set_zlabel("$u_{n+2}$")
+    ax = fig.add_subplot(1, 3, 3)
+    ax.hist(comb["s_lcg"], bins=400, range=(-6, 10), color="tab:blue", alpha=0.6, label="notebook LCG")
+    ax.hist(comb["s_randu"], bins=400, range=(-6, 10), color="tab:red", alpha=0.8, label="RANDU")
+    ax.set_yscale("log")
+    ax.set_xlabel(r"$s = 9u_n - 6u_{n+1} + u_{n+2}$")
+    ax.set_ylabel("count (100000 triples)")
+    ax.set_title("RANDU: s is always an integer (15 values)")
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    save(fig, "randu_planes.png")
+
+
 def main():
     PLOTS.mkdir(exist_ok=True)
     coin_tosses()
@@ -169,6 +198,7 @@ def main():
     square_uniform()
     exponential()
     empirical_cdf()
+    randu_planes()
 
 
 if __name__ == "__main__":

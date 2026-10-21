@@ -5,7 +5,9 @@
 //
 // The histogram is compared with the pdf (bin-average density and chi-square test).
 //
-// Usage: ./exponential [n] [bins] [seed]   (default n = 1e6, bins = 60, seed = 12345)
+// U comes from the notebook LCG (see common.h).
+//
+// Usage: ./exponential [n] [bins] [seed]   (default n = 200000, bins = 60, seed = 246813579)
 // Output: output/exponential.csv
 
 #include "common.h"
@@ -17,9 +19,9 @@
 
 int main(int argc, char *argv[])
 {
-    unsigned long n = arg_ulong(argc, argv, 1, 1000000, "n");
+    unsigned long n = arg_ulong(argc, argv, 1, 200000, "n");
     size_t bins = arg_ulong(argc, argv, 2, 60, "bins");
-    unsigned long seed = arg_ulong(argc, argv, 3, DEFAULT_SEED, "seed");
+    uint32_t seed = arg_seed(argc, argv, 3, EXPONENTIAL_SEED);
     const double lambda = LAMBDA;
 
     double *y = malloc(n * sizeof(*y));
@@ -30,8 +32,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    gsl_rng *r = rng_new(seed);
-    exponential_sample(r, lambda, y, n);
+    lcg_t g = lcg_new(seed);
+    exponential_sample(&g, lambda, y, n);
 
     double width = Y_MAX / (double)bins, sum = 0.0, sum2 = 0.0, ymax = 0.0;
     for (unsigned long i = 0; i < n; i++) {
@@ -60,8 +62,8 @@ int main(int argc, char *argv[])
     double chi2 = chi_square(count, expected, bins + 1, &dof, &p_value);
     double mean = sum / n, var = sum2 / n - mean * mean;
 
-    printf("Exercise 4: exponential, lambda = %.2f, n = %lu samples (seed %lu)\n\n", lambda, n,
-           seed);
+    printf("Exercise 4: exponential, lambda = %.2f, n = %lu samples (notebook LCG, seed %u)\n\n",
+           lambda, n, seed);
     printf("                  sample      exact\n");
     printf("mean     1/lambda   = %.5f   %.5f\n", mean, 1.0 / lambda);
     printf("variance 1/lambda^2 = %.5f   %.5f\n", var, 1.0 / (lambda * lambda));
@@ -76,6 +78,5 @@ int main(int argc, char *argv[])
     free(y);
     free(count);
     free(expected);
-    gsl_rng_free(r);
     return 0;
 }

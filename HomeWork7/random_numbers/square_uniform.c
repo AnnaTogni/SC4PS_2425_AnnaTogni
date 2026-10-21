@@ -8,7 +8,9 @@
 //   (F_Y(b) - F_Y(a)) / (b - a) = (sqrt(b) - sqrt(a)) / (b - a),
 // not with f_Y at the bin centre. A chi-square test compares observed and expected counts.
 //
-// Usage: ./square_uniform [n] [bins] [seed]   (default n = 1e6, bins = 50, seed = 12345)
+// U comes from the notebook LCG (see common.h).
+//
+// Usage: ./square_uniform [n] [bins] [seed]   (default n = 200000, bins = 50, seed = 13579)
 // Output: output/square_uniform.csv
 
 #include "common.h"
@@ -18,10 +20,10 @@
 
 int main(int argc, char *argv[])
 {
-    unsigned long n = arg_ulong(argc, argv, 1, 1000000, "n");
+    unsigned long n = arg_ulong(argc, argv, 1, 200000, "n");
     size_t bins = arg_ulong(argc, argv, 2, 50, "bins");
-    unsigned long seed = arg_ulong(argc, argv, 3, DEFAULT_SEED, "seed");
-    gsl_rng *r = rng_new(seed);
+    uint32_t seed = arg_seed(argc, argv, 3, 13579u);
+    lcg_t g = lcg_new(seed);
 
     size_t *count = calloc(bins, sizeof(*count));
     double *expected = malloc(bins * sizeof(*expected));
@@ -32,8 +34,8 @@ int main(int argc, char *argv[])
 
     double sum = 0.0, sum2 = 0.0;
     for (unsigned long i = 0; i < n; i++) {
-        double u = gsl_rng_uniform(r); // [0, 1)
-        double y = u * u;              // the change of variables
+        double u = lcg_uniform(&g); // [0, 1)
+        double y = u * u;           // the change of variables
         sum += y;
         sum2 += y * y;
         size_t k = (size_t)(y * bins);
@@ -58,7 +60,7 @@ int main(int argc, char *argv[])
     double chi2 = chi_square(count, expected, bins, &dof, &p_value);
     double mean = sum / n, var = sum2 / n - mean * mean;
 
-    printf("Exercise 3: Y = U^2, n = %lu samples, %zu bins (seed %lu)\n\n", n, bins, seed);
+    printf("Exercise 3: Y = U^2, n = %lu samples, %zu bins (notebook LCG, seed %u)\n\n", n, bins, seed);
     printf("                 sample        exact\n");
     printf("mean     E[Y]  = %.6f   1/3  = %.6f\n", mean, 1.0 / 3.0);
     printf("variance Var[Y]= %.6f   4/45 = %.6f\n", var, 4.0 / 45.0);
@@ -72,6 +74,5 @@ int main(int argc, char *argv[])
 
     free(count);
     free(expected);
-    gsl_rng_free(r);
     return 0;
 }
