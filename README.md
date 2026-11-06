@@ -1,4 +1,4 @@
-# SC4PS_2526
+# SC4PS_2425_AnnaTogni
 Scientific Computing for Physics Students 2025-2026
 
 My solutions to the homework of the Scientific Computing class.
