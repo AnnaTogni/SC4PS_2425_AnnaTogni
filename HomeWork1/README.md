@@ -34,9 +34,9 @@ manager is `dnf` (`yum` still works as an alias).
 | A University network connection (or VPN), or the CloudVeneto gate | VMs have **private** IP addresses (see §4) |
 
 Throughout the guide:
-- Lines starting with `$` are typed on **your own computer**.
+- Lines starting with `$` are typed **on your own computer**.
 - Lines starting with `[vm]$` are typed **on the VM**.
-- Don't type the `$` itself.
+Don't type the `$` itself.
 
 ---
 
