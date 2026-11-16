@@ -21,6 +21,7 @@ powers of two.
 | `sampling_dft_fft.c` | The program (C version) |
 | `plot_sampling_dft_fft.gp` | gnuplot script: 6-panel figure of the last run |
 | `Makefile` | `make`, `make run`, `make plot`, `make help`, `make clean` |
+| `images/` | The figures shown below (four example runs) |
 
 ## Build and run
 
@@ -48,6 +49,55 @@ Examples:
 | `./sampling_dft_fft 97 1 10` | N = 97 is prime: the FFT can't split it, so it is no faster than the DFT |
 
 Exit code: `0` OK, `1` wrong input / no memory / file error, `2` a check failed.
+
+## Results: pictures
+
+Each figure is made by `plot_sampling_dft_fft.gp` from one run of the program, and has 6 panels:
+
+| Left column | Right column |
+|---|---|
+| the continuous signal and its samples | the input frequencies and where they are observed after sampling |
+| the samples rebuilt with the inverse DFT | the amplitude spectrum from the naive DFT |
+| the samples rebuilt with the inverse FFT | the amplitude spectrum from the FFT |
+
+In every case the DFT and FFT spectra are identical, and the rebuilt samples match the original
+ones.
+
+### 1. Aliasing: `./sampling_dft_fft 128 1 50 120`
+
+The sampling frequency is 128 Hz, so the Nyquist frequency is 64 Hz. The 50 Hz component is
+below it and appears at 50 Hz. The 120 Hz component is above it, so the spectrum shows it at
+|120 − 128| = **8 Hz**, a frequency that is not in the signal. In the top-left panel, the red
+samples miss most of the fast oscillation.
+
+![Aliasing: 120 Hz sampled at 128 Hz appears at 8 Hz](images/aliasing.png)
+
+### 2. Good sampling: `./sampling_dft_fft 512 1 50 120`
+
+Same signal, but sampled at 512 Hz (Nyquist frequency 256 Hz). Both components are below the
+Nyquist frequency, so the spectrum shows two clean peaks at their true frequencies, 50 and
+120 Hz.
+
+![Good sampling: peaks at 50 and 120 Hz](images/well_sampled.png)
+
+### 3. Leakage: `./sampling_dft_fft 100 1.5 20 37`
+
+N = 150 samples (not a power of two: the mixed-radix FFT handles it). The bins are
+Δf = 1/T = 0.67 Hz apart. 20 Hz is exactly on a bin and gives one sharp peak of height 1.
+37 Hz falls between two bins (36.67 and 37.33 Hz): its energy **leaks** into the
+neighbouring bins, and the two highest only reach about 0.64.
+
+![Leakage: 37 Hz falls between two bins](images/leakage.png)
+
+### 4. Record too short: `./sampling_dft_fft 512 0.125 50 55`
+
+Only 0.125 s of signal, so Δf = 1/T = 8 Hz. The two frequencies are 5 Hz apart, less than
+one bin: the spectrum shows a single wide bump over the 48 and 56 Hz bins, and the program
+finds only one peak. The time-domain panel shows why: in 0.125 s the two sines don't have time
+to drift apart, and we see only the start of a slow beat. To separate them, the record must be
+longer than 1/(55 − 50) = 0.2 s.
+
+![Record too short: 50 and 55 Hz are not separated](images/short_record.png)
 
 ## Results: DFT vs FFT timing (forward transform, this PC, `-O2`)
 
