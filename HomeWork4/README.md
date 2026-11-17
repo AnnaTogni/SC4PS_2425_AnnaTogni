@@ -327,9 +327,19 @@ up with the normal-mode frequencies within one bin:
 
 ![make plot: coupled_oscillators_spectrum.png](images/make_plot_coupled_oscillators_spectrum.png)
 
-Note: the gnuplot version of this plot has **no theoretical reference lines** (only the Python
-version, `make plot-python`, draws them). The theoretical values used for the comparison are
-the ones printed by `coupled_oscillators_fft` (and derived in Part 5):
+Note: the gnuplot version of this plot has **no theoretical reference lines**. The Python
+version, made with **`make plot-python`**, draws them as dashed lines, and shows directly that
+each peak sits on its theoretical frequency:
+
+![make plot-python: coupled_oscillators_spectrum.png](images/make_plot_python_coupled_oscillators_spectrum.png)
+
+(In the Python script these theoretical lines are computed from spring constants written again
+inside the script, not read from the C program: with the default values they are correct, but
+they would not follow a change of the constants in the C code. See
+[issue 2 in ISSUES.md](ISSUES.md).)
+
+The theoretical values used for the comparison are the ones printed by `coupled_oscillators_fft`
+(and derived in Part 5):
 
 | Mode | Theory [Hz] | FFT peak [Hz] | Difference [Hz] |
 |---|---|---|---|
