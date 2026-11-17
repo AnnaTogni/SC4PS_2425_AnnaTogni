@@ -137,19 +137,58 @@ large L is (section 2).
 dominant solution to amplify the rounding errors: they stay at the ε level and grow only
 slowly, roughly ∝ ℓ·ε. This is what the errors and the plots show.
 
-**Conditioning vs stability.**
-- **Conditioning** is a property of the *mathematical problem*: how much P<sub>ℓ</sub>(x)
-  changes when x changes. The relative condition number is
-  κ<sub>ℓ</sub>(x) = |x P′<sub>ℓ</sub>(x) / P<sub>ℓ</sub>(x)|. Here κ is moderate (median over
-  ℓ ≤ 50 between 2 and 142 for the four x values; exactly at x = 1, κ = ℓ(ℓ+1)/2 ≈ 1275 at
-  ℓ = 50). It is large only near the zeros of P<sub>ℓ</sub>, where no method can give a small
-  *relative* error.
-- **Stability** is a property of the *algorithm*: whether it adds more error than the
-  conditioning makes unavoidable. The forward recurrence stays at the κ·ε level (the dashed line
-  in the relative-error plot; the forward error is above it only at a few points, at most ×20,
-  where κ is accidentally almost 0 near the maxima of P<sub>ℓ</sub>) and does not grow with ℓ:
-  it is **stable**. The backward procedure is not an unstable version of the same computation:
-  it computes a *different* solution of the recurrence.
+**Conditioning vs stability.** To judge an error, two different questions must be kept apart:
+- is the **problem** itself sensitive to small changes of its input? (**conditioning**)
+- does the **algorithm** add more error than that sensitivity already makes unavoidable?
+  (**stability**)
+
+*Conditioning: how sensitive P<sub>ℓ</sub>(x) is to x.* In a computer the input is already
+slightly wrong: 0.1, for example, has no exact binary representation, and is stored with a
+relative error of up to ε/2 ≈ 1.1·10⁻¹⁶. If x changes by a small relative amount δ, i.e.
+x → x(1+δ), then to first order
+
+  P<sub>ℓ</sub>(x(1+δ)) ≈ P<sub>ℓ</sub>(x) + x P′<sub>ℓ</sub>(x)·δ,
+
+so the relative change of P<sub>ℓ</sub> is κ<sub>ℓ</sub>(x)·δ, with the **relative condition
+number**
+
+  κ<sub>ℓ</sub>(x) = | x P′<sub>ℓ</sub>(x) / P<sub>ℓ</sub>(x) |.
+
+It is an amplification factor: an input error of 1 part in 10¹⁶ becomes an output error of
+κ parts in 10¹⁶. So **no algorithm**, not even an exact one, can give a relative error much
+smaller than **κ·ε**: about log₁₀ κ digits are lost just because x is rounded. The program
+computes κ for every ℓ from the reference values, using
+P′<sub>ℓ</sub>(x) = ℓ (x P<sub>ℓ</sub> − P<sub>ℓ−1</sub>)/(x² − 1) (column `condition_number` of
+the CSV files):
+
+| x | typical κ (median over ℓ ≤ 50) | largest κ | digits lost at most (log₁₀ κ) |
+|---|---|---|---|
+| 0.1 | 1.9 | 225 | 2.4 |
+| 0.5 | 13 | 109 | 2.0 |
+| 0.9 | 42 | 452 | 2.7 |
+| 0.99 | 145 | 3880 | 3.6 |
+
+(Exactly at x = 1, P<sub>ℓ</sub>(1) = 1 and P′<sub>ℓ</sub>(1) = ℓ(ℓ+1)/2, so κ = 1275 at
+ℓ = 50.) These values are moderate: computing P<sub>ℓ</sub>(x) is a **well-conditioned**
+problem, also close to x = 1. κ becomes large only near the **zeros** of P<sub>ℓ</sub>, where
+P<sub>ℓ</sub> is almost 0 and any *relative* error is inflated by the division. This is why
+some relative errors in section 2 are 10⁻¹⁴ while the absolute ones are 10⁻¹⁶: it is a
+property of the function, not of the method.
+
+*Stability: does the forward recurrence add error of its own?* Every step of the recurrence is
+rounded too, so the algorithm makes its own errors of about ε per step. It is called **stable**
+if its total error stays comparable to the unavoidable κ·ε, i.e. if it does about as well as the
+problem allows. The relative-error plot answers this directly: the dashed grey line is κ·ε, and
+the forward error (blue) follows it and does not grow with ℓ. Only 8 of the 200 points
+(ℓ = 1 … 50 for the four x) lie above the line, by at most about 20 times. These are points
+where κ is accidentally almost 0 (down to 0.03): near the maxima of P<sub>ℓ</sub>, where
+P′<sub>ℓ</sub> ≈ 0, so rounding x has almost no effect, but the recurrence still makes its own
+rounding errors of order ε. The forward recurrence is therefore **stable**.
+
+*The backward procedure is not an instability.* Its errors of order 1 do not come from rounding
+errors that grow: even in exact arithmetic it would return the combination
+a·P<sub>ℓ</sub> + b·Q<sub>ℓ</sub> fixed by its arbitrary start, not P<sub>ℓ</sub>. It computes a
+*different solution* of the recurrence.
 
 ## 5. Connection to spherical harmonics
 
