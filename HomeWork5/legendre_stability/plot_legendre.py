@@ -2,9 +2,9 @@
 """
 Plot the results of ./legendre_stability (CSV files in output/) into plots/.
 
-  plots/legendre_P_relative_error.png   |relative error| vs l of P_l(x), |x| < 1  (homework point 5)
-  plots/legendre_Q_relative_error.png   |relative error| vs l of Q_l(x),  x > 1
-  plots/legendre_values.png             the values themselves: forward, Miller, reference
+  plots/legendre_P_relative_error.png   |relative error| vs l of P_l(x), one panel per x
+  plots/legendre_P_absolute_error.png   |absolute error| vs l of P_l(x), one panel per x
+  plots/legendre_values.png             the values themselves: forward, backward, reference
 
 Usage: python3 plot_legendre.py   (after running ./legendre_stability)
 """
@@ -25,9 +25,7 @@ FLOOR = 1e-18                # errors that are exactly 0 are drawn at this level
 
 FORWARD = dict(color="tab:blue", marker="o", markersize=3, linewidth=1.5, label="forward")
 BACKWARD = dict(color="tab:red", marker="s", markersize=3, linewidth=1.5,
-                label="backward, Miller ($f_0$ only)")
-BACKWARD2 = dict(color="tab:green", marker="^", markersize=3, linewidth=1.2, linestyle="--",
-                 label="backward, $P_0$ and $P_1$ fixed")
+                label="backward (Miller)")
 REFERENCE = dict(color="gray", linewidth=5, alpha=0.5, label="reference (quad)")
 
 
@@ -54,19 +52,17 @@ def grid(n):
     return fig, list(axes.flat)
 
 
-def error_figure(files, function, filename):
-    if not files:
-        return
+def error_figure(files, kind, filename):
+    """kind = "rel" (relative error) or "abs" (absolute error)."""
     fig, axes = grid(len(files))
-    fig.suptitle(f"Relative error of ${function}_\\ell(x)$ in double precision "
+    what = "Relative" if kind == "rel" else "Absolute"
+    fig.suptitle(f"{what} error of $P_\\ell(x)$ in double precision "
                  "(reference: quad precision)", fontsize=14)
     for ax, path in zip(axes, files):
         d = read(path)
-        ax.semilogy(d["l"], abs_or_floor(d["rel_err_forward"]), **FORWARD)
-        ax.semilogy(d["l"], abs_or_floor(d["rel_err_backward"]), **BACKWARD)
-        if function == "P":
-            ax.semilogy(d["l"], abs_or_floor(d["rel_err_backward2"]), **BACKWARD2)
-        if function == "P":
+        ax.semilogy(d["l"], abs_or_floor(d[f"{kind}_err_forward"]), **FORWARD)
+        ax.semilogy(d["l"], abs_or_floor(d[f"{kind}_err_backward"]), **BACKWARD)
+        if kind == "rel":
             # Error that rounding x itself would cause: kappa * eps (conditioning, not the algorithm)
             ax.semilogy(d["l"], abs_or_floor([c * EPS for c in d["condition_number"]]),
                         color="gray", linestyle="--", linewidth=1.2,
@@ -75,7 +71,7 @@ def error_figure(files, function, filename):
         ax.axhline(1.0, color="black", linewidth=0.8, alpha=0.5)
         ax.set_title(f"x = {d['x'][0]:g}")
         ax.set_xlabel(r"degree $\ell$")
-        ax.set_ylabel("|relative error|")
+        ax.set_ylabel(f"|{'relative' if kind == 'rel' else 'absolute'} error|")
         ax.set_ylim(FLOOR / 3, None)
         ax.grid(True, which="major", alpha=0.3)
         ax.legend(fontsize=8, loc="best")
@@ -86,23 +82,13 @@ def error_figure(files, function, filename):
 
 def values_figure(files, filename):
     fig, axes = grid(len(files))
-    fig.suptitle("Values: forward and Miller recurrences vs the reference", fontsize=14)
+    fig.suptitle("Values: forward and backward recurrences vs the reference", fontsize=14)
     for ax, path in zip(axes, files):
         d = read(path)
-        function = "P" if "_P_" in path.name else "Q"
-        if function == "P":
-            ax.plot(d["l"], d["reference_quad"], **REFERENCE)
-            ax.plot(d["l"], d["forward"], **FORWARD)
-            ax.plot(d["l"], d["backward_miller"], **BACKWARD)
-            ax.plot(d["l"], d["backward_two_conditions"], **BACKWARD2)
-            ax.set_title(f"$P_\\ell(x)$, x = {d['x'][0]:g}")
-        else:
-            # Q_l decreases by many orders of magnitude: plot |Q_l| on a log scale
-            # (the wrong forward values also change sign)
-            for key, style in (("reference_quad", REFERENCE), ("forward", FORWARD),
-                               ("backward_miller", BACKWARD)):
-                ax.semilogy(d["l"], [abs(v) if v != 0 else math.nan for v in d[key]], **style)
-            ax.set_title(f"$|Q_\\ell(x)|$, x = {d['x'][0]:g}")
+        ax.plot(d["l"], d["reference_quad"], **REFERENCE)
+        ax.plot(d["l"], d["forward"], **FORWARD)
+        ax.plot(d["l"], d["backward_miller"], **BACKWARD)
+        ax.set_title(f"$P_\\ell(x)$, x = {d['x'][0]:g}")
         ax.set_xlabel(r"degree $\ell$")
         ax.grid(True, alpha=0.3)
         ax.legend(fontsize=8, loc="best")
@@ -116,14 +102,13 @@ def by_x(paths):
 
 
 def main():
-    p_files = by_x(OUTPUT_DIR.glob("legendre_P_x*.csv"))
-    q_files = by_x(OUTPUT_DIR.glob("legendre_Q_x*.csv"))
-    if not p_files and not q_files:
+    files = by_x(OUTPUT_DIR.glob("legendre_P_x*.csv"))
+    if not files:
         raise SystemExit("No CSV files in output/: run ./legendre_stability first.")
     PLOT_DIR.mkdir(exist_ok=True)
-    error_figure(p_files, "P", "legendre_P_relative_error.png")
-    error_figure(q_files, "Q", "legendre_Q_relative_error.png")
-    values_figure(p_files + q_files, "legendre_values.png")
+    error_figure(files, "rel", "legendre_P_relative_error.png")
+    error_figure(files, "abs", "legendre_P_absolute_error.png")
+    values_figure(files, "legendre_values.png")
 
 
 if __name__ == "__main__":
