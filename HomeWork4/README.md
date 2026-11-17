@@ -297,31 +297,54 @@ analytic solution (e.g. non-linear springs, more masses).
 
 ## Part 6: Plot inspection
 
-**1. Aliasing:** the **undersampled spectrum** (`sampling_spectra.png`, middle panel). It
-shows a strong peak at 8 Hz, where the input has no component.
+The answers refer to the plots generated with **`make plot`** (gnuplot), run in the tutorial
+folder without any modification. `make plot` first runs both programs (`make run`), then the
+gnuplot scripts `scripts/plot_sampling.gp` and `scripts/plot_coupled_oscillators.gp`, which
+write the figures in `plots/`. (`make plot-python` makes the same figures with matplotlib.)
 
-(The time-domain plot `sampling_signals.png` doesn't really show it, because the 1 s window is
-too dense to read. In the gnuplot version, half of the "good" samples are also dropped. See
-[issue 3 in ISSUES.md](ISSUES.md).)
+**1. Aliasing:** the **undersampled spectrum**: `plots/sampling_spectra.png`, middle panel.
+It shows a strong peak at 8 Hz (amplitude 0.7), where the input has no component: it is the
+120 Hz component, folded back below the Nyquist frequency of 64 Hz (see Part 3).
 
-**2. Limited frequency resolution:** the **short-record spectrum** (bottom panel). 50 and 55 Hz
-become one broad bump spread over the 8 Hz-wide bins, with leakage over the whole axis.
+![make plot: sampling_spectra.png](images/make_plot_sampling_spectra.png)
 
-**3. Coupled oscillators:** yes, within one bin:
+The time-domain plot `plots/sampling_signals.png` doesn't really show it: over the full 1 s the
+50 Hz and 120 Hz oscillations are too dense, and the curves look like an unreadable zigzag in
+which the slow 8 Hz oscillation can't be seen. In the gnuplot version, the top panel ("good
+sampling") also uses `every 2`, so half of its samples are dropped. See
+[issue 3 in ISSUES.md](ISSUES.md).
+
+![make plot: sampling_signals.png](images/make_plot_sampling_signals.png)
+
+**2. Limited frequency resolution:** the **short-record spectrum**:
+`plots/sampling_spectra.png`, bottom panel (figure above). The bars are 8 Hz apart, and 50 and
+55 Hz become one broad bump over the 48 and 56 Hz bins, with leakage spread over the whole
+axis (see Part 4). The bottom panel of `sampling_signals.png` shows the same thing in time: the
+0.125 s record contains less than one beat.
+
+**3. Coupled oscillators:** `plots/coupled_oscillators_spectrum.png`. Yes, the two peaks line
+up with the normal-mode frequencies within one bin:
+
+![make plot: coupled_oscillators_spectrum.png](images/make_plot_coupled_oscillators_spectrum.png)
+
+Note: the gnuplot version of this plot has **no theoretical reference lines** (only the Python
+version, `make plot-python`, draws them). The theoretical values used for the comparison are
+the ones printed by `coupled_oscillators_fft` (and derived in Part 5):
 
 | Mode | Theory [Hz] | FFT peak [Hz] | Difference [Hz] |
 |---|---|---|---|
 | In-phase | 0.79577 | 0.79688 | +0.0011 |
 | Out-of-phase | 0.99392 | 0.99219 | −0.0017 |
 
-Bin spacing: Δf = 1/(1024 · 0.125 s) = 0.0078 Hz.
+Bin spacing: Δf = 1/(N·Δt) = 1/(1024 · 0.125 s) = 0.0078 Hz.
 
 **4. Numerical reasons for the small differences:**
 - **Discrete bins.** The FFT only has frequencies k·Δf, so the peak is the nearest bin. The
   error is at most Δf/2 = 0.0039 Hz, as observed.
 - **Spectral leakage / scalloping.** The 128 s record doesn't contain an integer number of
-  periods and no window is applied, so the energy spreads over nearby bins. The peak height is
-  therefore lower than the true amplitude: 0.0486 and 0.0462 instead of 0.05.
+  periods and no window is applied, so the energy spreads over nearby bins: this is the width
+  at the base of the two peaks in the plot. The peak height is therefore lower than the true
+  amplitude: 0.0486 and 0.0462 instead of 0.05.
 - **ODE solver tolerance.** 10⁻⁹, so negligible here.
 - **Improvement.** A longer record (smaller Δf), a window function (e.g. Hann), or
   interpolating between bins would all reduce the difference.
