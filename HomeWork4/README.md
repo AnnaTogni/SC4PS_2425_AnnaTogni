@@ -8,7 +8,6 @@ Worksheet answers for the [myfft_tutorial](https://github.com/alexninogh/myfft_t
 | `README.md` | Answers to the worksheet (this file) |
 | `ISSUES.md` | Errors found in the project, with the proposed solutions (opened as GitHub issues) |
 | `images/` | Figures used in this README |
-| `sampling_dft_fft/` | My own exercise: sampling, DFT vs FFT and aliasing in C (see its [README](sampling_dft_fft/README.md)) |
 
 All the numbers below come from actually running the project (`make run`, GSL 2.7.1, gcc).
 
