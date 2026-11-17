@@ -27,7 +27,7 @@ help:
 	@echo "          (default 0.1 0.5 0.9 0.99 1.1 1.5 3)"
 	@echo ""
 	@echo "For each x it compares the forward and the backward recurrence (Miller with P_0 only,"
-	@echo "and, for |x| < 1, with P_0 and P_1 fixed as in the professor's correction) in double"
+	@echo "and, for |x| < 1, with both P_0 and P_1 fixed) in double"
 	@echo "precision with a quad-precision reference, prints the largest errors and writes"
 	@echo "output/legendre_<P|Q>_x<value>.csv. Then: python3 plot_legendre.py"
 	@echo ""

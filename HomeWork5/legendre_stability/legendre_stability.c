@@ -8,9 +8,9 @@
 // For every x the program compares, for l = 0 ... l_max:
 //   - forward recurrence (l increasing) in double precision
 //   - Miller's backward recurrence (l decreasing, from L > l_max) in double,
-//     normalized with ONE condition (f_0), as in the HomeWork05 text
+//     normalized with ONE condition (f_0)
 //   - for |x| < 1 only: backward recurrence normalized with TWO conditions
-//     (P_0 = 1 and P_1 = x), as in the professor's corrected example (lecture 8)
+//     (P_0 = 1 and P_1 = x)
 // against a reference computed in quad precision (__float128, 113-bit mantissa).
 //
 //   |x| < 1 : the function studied is P_l(x)   (the homework's case)
@@ -361,8 +361,8 @@ int main(int argc, char *argv[])
         study(xs[i], lmax, L);
 
     printf("\n|x| < 1: P_l(x).  x > 1: Q_l(x).  \"GSL =fw\": GSL gives exactly the forward values.\n");
-    printf("\"backward, f_0 only\" = Miller as in the HomeWork05 text; \"bw P0+P1\" = backward\n"
-           "recurrence normalized with P_0 = 1 and P_1 = x, as in the professor's correction.\n");
+    printf("\"backward, f_0 only\" = Miller, normalized with f_0 only; \"bw P0+P1\" = backward\n"
+           "recurrence normalized with P_0 = 1 and P_1 = x.\n");
     free(user_x);
     return 0;
 }

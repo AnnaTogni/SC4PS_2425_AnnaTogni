@@ -1,32 +1,26 @@
 # Stability of the Legendre recurrence
 
-HomeWork05 asks to compute P<sub>ℓ</sub>(x), ℓ = 0 … 50, with the three-term recurrence
-- forward (ℓ increasing),
-- backward with Miller's algorithm (from L = 80, normalized with P<sub>0</sub> = 1),
+HomeWork05 asks to compute P<sub>ℓ</sub>(x), ℓ = 0 … 50, with the three-term recurrence,
+both **forward** (ℓ increasing) and **backward** (ℓ decreasing, starting from L = 80), to compare
+the results with high-precision reference values at x = 0.1, 0.5, 0.9, 0.99, and to explain
+which direction is stable and why.
 
-and to compare both with high-precision reference values at x = 0.1, 0.5, 0.9, 0.99.
+This solution compares three methods:
+- the **forward** recurrence;
+- the **backward** recurrence with Miller's normalization, which fixes only one condition,
+  P<sub>0</sub> = 1;
+- the **backward** recurrence with **two** conditions, P<sub>0</sub> = 1 and P<sub>1</sub> = x.
 
-> **Note: the HomeWork05 text contained an error, now confirmed by the professor.**
-> In lecture 8 the professor wrote: *"The text in HW05 is wrong → I mixed up the forward and
-> backward recurrence"*. The professor's
-> ["starting solution"](https://codimd.infn.it/s/ftKB8jdK1) and the corrected example program
-> shown in lecture 8 reach the same conclusion as this solution.
+**Main results.**
+- For P<sub>ℓ</sub>(x), |x| < 1, the **forward** recurrence is stable and accurate to ~10⁻¹⁶.
+- The backward recurrence normalized with P<sub>0</sub> only gives errors of order 1; with
+  both P<sub>0</sub> and P<sub>1</sub> fixed it is as accurate as the forward one
+  (errors ≤ 4·10⁻¹⁵).
+- To show the opposite case, the program also computes the **other** solution of the same
+  recurrence, Q<sub>ℓ</sub>(x), at x > 1: there the forward recurrence is unstable (errors up to
+  10⁶⁰) and Miller's backward recurrence is the accurate method.
 
-**What the original text claimed, and what is true.**
-- *Claimed:* the forward recurrence becomes unstable near x = 1, and Miller's backward
-  recurrence fixes it.
-- *True for P<sub>ℓ</sub>, |x| < 1:* the **forward** recurrence is accurate to ~10⁻¹⁶. Miller's
-  backward recurrence, normalized only with P<sub>0</sub> = 1, gives wrong results (errors of
-  order 1).
-- *Where the original claim does hold:* the "dominant/minimal solution" story (forward
-  unstable, Miller as the fix) is real, but for the **other** solution of the same recurrence,
-  **Q<sub>ℓ</sub>(x)**, at **x > 1**.
-
-**The corrected version of the backward experiment.** The professor's corrected example
-normalizes the backward recurrence with **two** conditions, P<sub>0</sub> = 1 *and*
-P<sub>1</sub> = x, instead of P<sub>0</sub> = 1 only. With that change, the backward recurrence
-gives accurate P<sub>ℓ</sub> for |x| < 1 (errors ≤ 4·10⁻¹⁵). This solution includes it as a
-third method, and section 6 explains why it works.
+Section 6 explains all these results with the two solutions of the recurrence.
 
 | File | Content |
 |---|---|
@@ -57,8 +51,8 @@ The starting values select which solution you get:
 | Method | How |
 |---|---|
 | Forward | Recurrence upwards in `double` |
-| Miller backward (one condition, as in the original text) | f̃<sub>L+1</sub> = 0, f̃<sub>L</sub> = 1, recurrence downwards in `double`, then rescale so that f<sub>0</sub> = P<sub>0</sub> (or Q<sub>0</sub>) |
-| Backward with two conditions (P<sub>ℓ</sub> only, as in the professor's correction) | Two backward runs from independent starts (f̃<sub>L</sub> = 1, f̃<sub>L+1</sub> = 0 and f̃<sub>L</sub> = 0, f̃<sub>L+1</sub> = 1), combined so that P<sub>0</sub> = 1 and P<sub>1</sub> = x |
+| Miller backward (one condition) | f̃<sub>L+1</sub> = 0, f̃<sub>L</sub> = 1, recurrence downwards in `double`, then rescale so that f<sub>0</sub> = P<sub>0</sub> (or Q<sub>0</sub>) |
+| Backward with two conditions (P<sub>ℓ</sub> only) | Two backward runs from independent starts (f̃<sub>L</sub> = 1, f̃<sub>L+1</sub> = 0 and f̃<sub>L</sub> = 0, f̃<sub>L+1</sub> = 1), combined so that P<sub>0</sub> = 1 and P<sub>1</sub> = x |
 | **Reference** | `__float128` (113-bit mantissa, ~34 digits). For P<sub>ℓ</sub>: forward recurrence. For Q<sub>ℓ</sub>: Miller from ℓ<sub>max</sub> + 1000 |
 
 **Checking the references.**
@@ -70,8 +64,7 @@ The starting values select which solution you get:
 
 **Why not GSL as the reference?** `gsl_sf_legendre_Pl_array` computes the same forward
 recurrence in double precision, so its values are **bit-for-bit identical** to ours (column
-"GSL =fw" in the program output). Measuring the error against GSL always gives exactly 0. That
-was the problem with the first version of this exercise.
+"GSL =fw" in the program output). Measuring the error against GSL would always give exactly 0.
 
 ## 2–3. Errors (`make run`, l<sub>max</sub> = 50, L = 80)
 
@@ -87,13 +80,13 @@ Largest error over ℓ = 0 … 50:
 | Q<sub>ℓ</sub>(1.5) | 6.3·10³ | **4.9·10²⁵** | 1.1·10⁻¹⁶ | 1.5·10⁻¹⁵ | – |
 | Q<sub>ℓ</sub>(3) | 4.7·10²⁰ | **2.1·10⁶⁰** | 2.7·10⁻²⁰ | 4.6·10⁻¹⁶ | – |
 
-| Claim in the original HomeWork05 text (acknowledged as wrong by the professor) | Result |
-|---|---|
-| Forward accurate far from 1 (x = 0.1) | $\color{green}{\textbf{O}}$ yes, ~10⁻¹⁶ |
-| Forward unstable close to 1 (x = 0.99), errors of order 1 | $\color{red}{\textbf{X}}$ no: absolute error ≤ 5·10⁻¹⁶. Still accurate at ℓ = 1000 (`./legendre_stability 1000 1500 0.99`: 1.7·10⁻¹⁵) |
-| Backward (Miller) accurate for all ℓ and x | $\color{red}{\textbf{X}}$ no: errors of order 1 for P<sub>ℓ</sub> at every x < 1 |
-| *(same claims for Q<sub>ℓ</sub>, x > 1)* | $\color{green}{\textbf{O}}$ forward blows up, Miller accurate |
-| *(corrected version)* Backward with P<sub>0</sub> and P<sub>1</sub> fixed, \|x\| < 1 | $\color{green}{\textbf{O}}$ accurate, errors ≤ 4·10⁻¹⁵, at the conditioning level like the forward recurrence |
+Summary:
+
+| Method | P<sub>ℓ</sub>(x), \|x\| < 1 | Q<sub>ℓ</sub>(x), x > 1 |
+|---|---|---|
+| Forward | $\color{green}{\textbf{stable}}$: errors ~10⁻¹⁶ at every x, also close to 1 (x = 0.99), and still 1.7·10⁻¹⁵ at ℓ = 1000 (`./legendre_stability 1000 1500 0.99`) | $\color{red}{\textbf{unstable}}$: relative errors grow exponentially with ℓ, up to 10⁶⁰ |
+| Backward, Miller (P<sub>0</sub> only) | $\color{red}{\textbf{wrong}}$: errors of order 1 at every x | $\color{green}{\textbf{stable}}$: errors ~10⁻¹⁵ |
+| Backward, P<sub>0</sub> and P<sub>1</sub> fixed | $\color{green}{\textbf{stable}}$: errors ≤ 4·10⁻¹⁵, at the conditioning level like the forward recurrence | not applicable: the 2×2 normalization becomes singular (section 6) |
 
 **Why are the relative errors of P<sub>ℓ</sub> sometimes 10⁻¹⁴ when the absolute ones are
 10⁻¹⁶?** Near a zero of P<sub>ℓ</sub>(x), dividing by a tiny P<sub>ℓ</sub> inflates the
@@ -114,8 +107,8 @@ is a known constant computed to full precision.
 
 - Building Y<sub>ℓ0</sub> with the **forward** recurrence, as is usually done, is safe: relative
   error ~10⁻¹⁶ away from the zeros.
-- Building it with **Miller's** recurrence, normalized with P<sub>0</sub> only as in the
-  original text, would give completely wrong spherical harmonics: relative errors of 1–100 for
+- Building it with **Miller's** recurrence, normalized with P<sub>0</sub> only, would give
+  completely wrong spherical harmonics: relative errors of 1–100 for
   ℓ ≥ 1.
 - The backward recurrence with **both** P<sub>0</sub> and P<sub>1</sub> fixed would also give
   correct Y<sub>ℓ0</sub>, but it costs two runs instead of one and has no advantage over the
@@ -172,7 +165,7 @@ where λ = x + √(x²−1) > 1.
   therefore does not converge to P<sub>ℓ</sub>, however large L is. For the same reason, the
   forward recurrence has nothing to amplify, so it is **stable** for P<sub>ℓ</sub>: the error
   grows only slowly, roughly ∝ ℓ·ε.
-- **Why two conditions fix it (the professor's correction).** Since every solution is
+- **Why two conditions fix it.** Since every solution is
   a·P<sub>ℓ</sub> + b·Q<sub>ℓ</sub>, *two* conditions determine both constants.
   - Two backward runs from independent starts give two independent solutions A<sub>ℓ</sub> and
     B<sub>ℓ</sub>. The combination c<sub>a</sub>A<sub>ℓ</sub> + c<sub>b</sub>B<sub>ℓ</sub> with
@@ -184,8 +177,8 @@ where λ = x + √(x²−1) > 1.
     down), so A<sub>ℓ</sub> and B<sub>ℓ</sub> become proportional to all 16 digits. The 2×2
     system for c<sub>a</sub>, c<sub>b</sub> becomes singular: its determinant is exactly 0 in
     double precision for x = 1.1 and x = 3, and 10⁻¹⁶ of its typical size (pure rounding noise)
-    for x = 1.5. That's why the professor's example notes
-    that the backward recurrence is ill-conditioned for P<sub>ℓ</sub> outside [−1, 1].
+    for x = 1.5. The backward recurrence with two conditions is therefore ill-conditioned
+    for P<sub>ℓ</sub> outside [−1, 1].
 
 **Conditioning vs stability.**
 - **Conditioning** is a property of the *mathematical problem*: how much P<sub>ℓ</sub>(x)
@@ -193,7 +186,7 @@ where λ = x + √(x²−1) > 1.
   κ<sub>ℓ</sub>(x) = |x P′<sub>ℓ</sub>(x) / P<sub>ℓ</sub>(x)|. Here κ is moderate: the median
   over ℓ ≤ 50 is 2–142 for the four x values, and exactly at x = 1, κ = ℓ(ℓ+1)/2 ≈ 1275 at
   ℓ = 50. It is large only near the zeros of P<sub>ℓ</sub>, where no method can give a small
-  *relative* error. So P<sub>ℓ</sub>(x) is well-conditioned near x = 1, as the homework says.
+  *relative* error. So P<sub>ℓ</sub>(x) is well-conditioned near x = 1.
 - **Stability** is a property of the *algorithm*: whether it adds more error than the
   conditioning makes unavoidable.
   - The forward recurrence for P<sub>ℓ</sub> stays at the κ·ε level and doesn't grow with ℓ:
