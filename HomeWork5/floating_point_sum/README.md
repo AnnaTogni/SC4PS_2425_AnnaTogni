@@ -1,18 +1,21 @@
 # Floating-point summation
 
-Exercise from the floating-point lecture: sum the vector **[1.0, 1.0e16, −1.0e16, −0.5]**
-(exact sum **0.5**)
-- with a for loop,
-- with a library function (GSL),
-- with Kahan's algorithm,
+Exercise from the floating-point lecture: define the vector
+**v = [1.0, 1.0e16, −1.0e16, −0.5]**, whose exact sum is **0.5**, and compute its sum in three
+different ways:
+1. with a `for` loop;
+2. with the sum function of a library (GSL, `gsl_vector_sum`);
+3. with Kahan's summation algorithm;
 
-and explain why the results differ.
+then compare the results.
 
-`floating_point_sum.c` adds five more methods to understand what is going on.
+All three give **−0.5**. To understand *why*, and *what* would give the correct result,
+`floating_point_sum.c` also tests five **additional methods** (4–8), which are not required by
+the exercise.
 
 | File | Content |
 |---|---|
-| `floating_point_sum.c` | The program |
+| `floating_point_sum.c` | The program: the 3 required methods, the 5 additional ones, and a step-by-step trace of Kahan and Neumaier |
 | `Makefile` | `make` (builds and prints the instructions), `make run`, `make help`, `make clean` |
 
 ## Build and run
@@ -25,55 +28,187 @@ make
 
 ## Results for [1, 1e16, −1e16, −0.5]
 
-| Method | Result | Correct? |
-|---|---|---|
-| 1. for loop | −0.5 | $\color{red}{\textbf{X}}$ |
-| 2. GSL `gsl_vector_sum` | −0.5 | $\color{red}{\textbf{X}}$ |
-| 3. Kahan | −0.5 | $\color{red}{\textbf{X}}$ |
-| 4. Neumaier (improved Kahan) | **0.5** | $\color{green}{\textbf{O}}$ |
-| 5. Pairwise | 0 | $\color{red}{\textbf{X}}$ |
-| 6. Sorted by \|x\|, then loop | 0 | $\color{red}{\textbf{X}}$ |
-| 7. Loop in `long double` | **0.5** | $\color{green}{\textbf{O}}$ |
-| 8. Exact sum (Shewchuk, as Python's `math.fsum`) | **0.5** | $\color{green}{\textbf{O}}$ |
+| Method | | Result | |
+|---|---|---|---|
+| 1. `for` loop | required | −0.5 | $\color{red}{\textbf{wrong}}$ |
+| 2. GSL `gsl_vector_sum` | required | −0.5 | $\color{red}{\textbf{wrong}}$ |
+| 3. Kahan | required | −0.5 | $\color{red}{\textbf{wrong}}$ |
+| 4. Neumaier (improved Kahan) | additional | **0.5** | $\color{green}{\textbf{correct}}$ |
+| 5. Pairwise | additional | 0 | $\color{red}{\textbf{wrong}}$ |
+| 6. Sorted by \|x\|, then loop | additional | 0 | $\color{red}{\textbf{wrong}}$ |
+| 7. Loop in `long double` | additional | **0.5** | $\color{green}{\textbf{correct}}$ |
+| 8. Exact sum (Shewchuk, as Python's `math.fsum`) | additional | **0.5** | $\color{green}{\textbf{correct}}$ |
 
-## Why are the results different?
+## The key fact: the 1 disappears
 
-**The 1 disappears.** Near 10¹⁶, doubles are spaced by 2: a double has 53 bits of mantissa,
-and 2⁵³ ≈ 9·10¹⁵. So 10¹⁶ + 1 is exactly halfway between two doubles, and it rounds (to even)
-to 10¹⁶. Floating-point addition is **not associative**: (1 + 10¹⁶) − 10¹⁶ = 0, but
-1 + (10¹⁶ − 10¹⁶) = 1.
+A `double` has 53 bits of mantissa (52 stored + 1 implicit). Between 2⁵³ ≈ 9.0·10¹⁵ and
+2⁵⁴ ≈ 1.8·10¹⁶ the doubles are therefore **2 apart**: 10¹⁶ and 10¹⁶ + 2 are doubles, 10¹⁶ + 1
+is not. 10¹⁶ + 1 lies exactly halfway, and IEEE 754 rounds it (to the even neighbour) back to
+**10¹⁶**. The 1 is lost.
 
-- **For loop and GSL:** 1 + 10¹⁶ → 10¹⁶, then − 10¹⁶ → 0, then − 0.5 → **−0.5**.
-  `gsl_vector_sum` is a plain loop, so it gives the same result.
-- **Kahan:** the compensation c = (t − s) − y recovers the lost low-order part *only if
-  |s| ≥ |y|* (the running sum is larger than the new term). At step 2, the new term (10¹⁶) is
-  much larger than the sum (1), so t − s = 10¹⁶ − 1 is itself rounded to 10¹⁶, and c becomes 0.
-  The lost 1 is never recorded:
+As a consequence, floating-point addition is **not associative**: the result depends on the
+order of the operations:
 
-  | Step | Add | Sum s | Compensation c |
-  |---|---|---|---|
-  | 1 | 1 | 1 | 0 |
-  | 2 | 1e16 | 1e16 | **0** (the 1 is lost) |
-  | 3 | −1e16 | 0 | 0 |
-  | 4 | −0.5 | −0.5 | 0 |
-- **Neumaier:** computes the lost part from whichever operand is *larger*, so it works in both
-  cases. At step 2 it records c = 1 and adds it back at the end: −0.5 + 1 = **0.5**.
-- **Pairwise:** (1 + 10¹⁶) + (−10¹⁶ − 0.5) = 10¹⁶ − 10¹⁶ = **0**. Both the 1 and the 0.5 are
-  lost, because each one is added to a number of size 10¹⁶.
-- **Sorted by \|x\|:** the order is −0.5, 1, 10¹⁶, −10¹⁶. The partial sum 0.5 is added to 10¹⁶
-  and lost, so the result is **0**. Sorting helps for many numbers of similar sign, but not when
-  large terms cancel.
-- **long double:** 64 bits of mantissa. Near 10¹⁶ the spacing is 1/1024, so 10¹⁶ + 1 is exact and
-  the result is **0.5**. More precision only moves the problem further away: try
-  `./floating_point_sum 1 1e20 -1e20 -0.5`.
-- **Exact (Shewchuk):** keeps the running sum *exactly*, as a list of non-overlapping doubles,
-  using error-free transformations (a + b = hi + lo exactly). It always gives the correctly
-  rounded result.
+(1 + 10¹⁶) − 10¹⁶ = 10¹⁶ − 10¹⁶ = **0**, but 1 + (10¹⁶ − 10¹⁶) = 1 + 0 = **1**.
 
-**Takeaways.**
-- The result of a floating-point sum depends on the **order** of the operations.
-- Compensated algorithms can fix it, but **Kahan is not enough** when a term is larger than the
-  running sum. Neumaier, or an exact summation, is needed.
-- One more surprise: `./floating_point_sum 0.1 0.2 0.3 -0.6` gives **2.8·10⁻¹⁷**, not 0, even
-  with the exact method. The doubles closest to 0.1, 0.2, 0.3 and 0.6 are not exactly those
-  decimal numbers, and their exact sum really is 2.8·10⁻¹⁷.
+## The three required methods
+
+### 1. `for` loop
+
+```c
+double s = 0.0;
+for (size_t i = 0; i < n; i++) s += v[i];
+```
+
+The elements are added left to right: 1 + 10¹⁶ → 10¹⁶ (the 1 is lost), then − 10¹⁶ → 0, then
+− 0.5 → **−0.5**.
+
+### 2. GSL `gsl_vector_sum`
+
+The numbers are wrapped in a GSL vector (`gsl_vector_view_array`, no copy) and summed with
+`gsl_vector_sum`. Internally this function is a plain loop over the elements, so it makes the
+same roundings in the same order: **−0.5**. A library function is not automatically more
+accurate.
+
+### 3. Kahan compensated summation
+
+**Idea** (Kahan, 1965): keep, next to the running sum `s`, a variable `c` with the small part
+lost by the rounding of the last addition, and put it back into the next term.
+
+```c
+double s = 0.0, c = 0.0;
+for (size_t i = 0; i < n; i++) {
+    double y = v[i] - c;   // the new term, corrected by what was lost before
+    double t = s + y;      // the new sum (rounded)
+    c = (t - s) - y;       // (what was really added) - (what we wanted to add) = the lost part
+    s = t;
+}
+```
+
+For many numbers of similar size this makes the error independent of n. Here it does not help:
+the formula `c = (t − s) − y` is exact **only if |s| ≥ |y|**, i.e. if the running sum is larger
+than the new term. At step 2 the new term (10¹⁶) is much larger than the sum (1): `t − s` =
+10¹⁶ − 1 is itself rounded to 10¹⁶, so `c` = 0 and the lost 1 is never recorded. The program
+prints this step by step:
+
+| Step | Add | Sum s | Compensation c |
+|---|---|---|---|
+| 1 | 1 | 1 | 0 |
+| 2 | 1e16 | 1e16 | **0** (the 1 is lost) |
+| 3 | −1e16 | 0 | 0 |
+| 4 | −0.5 | −0.5 | 0 |
+
+Result: **−0.5**.
+
+## Five additional methods
+
+These are not part of the exercise. Each one tests one idea about *why* the required methods
+fail and *how* the sum can be computed correctly.
+
+### 4. Neumaier: does a better compensation fix Kahan? Yes
+
+**Idea** (Neumaier, 1974): compute the lost part from whichever of the two operands is
+**larger**, so that the formula is exact in both cases. The corrections are accumulated in `c`
+and added only once, at the end.
+
+```c
+double t = s + v[i];
+if (fabs(s) >= fabs(v[i])) c += (s - t) + v[i];   // the sum is larger: as in Kahan
+else                       c += (v[i] - t) + s;   // the new term is larger
+s = t;
+...
+return s + c;
+```
+
+At step 2, |s| = 1 < |v[i]| = 10¹⁶, so `c += (10¹⁶ − 10¹⁶) + 1 = 1`: the lost 1 is recorded.
+At the end: −0.5 + 1 = **0.5**. Correct.
+
+| Step | Add | Sum s | Correction c |
+|---|---|---|---|
+| 1 | 1 | 1 | 0 |
+| 2 | 1e16 | 1e16 | **1** (the 1 is saved) |
+| 3 | −1e16 | 0 | 1 |
+| 4 | −0.5 | −0.5 | 1 |
+
+### 5. Pairwise summation: does a different order help? Not here
+
+**Idea:** split the vector in two halves, sum each half recursively, then add the two results.
+The rounding error grows like log₂ n instead of n, which is why it is used, for example, by
+NumPy's `sum`.
+
+Here: (1 + 10¹⁶) + (−10¹⁶ − 0.5) = 10¹⁶ + (−10¹⁶) = **0**. Both the 1 and the −0.5 are added to
+a number of size 10¹⁶ and are lost.
+
+### 6. Sort by |x|, then loop: does "small numbers first" help? Not here
+
+**Idea:** a classic rule is to add the numbers from the smallest to the largest in absolute
+value, so that the small ones are accumulated before they meet the big ones.
+
+The order becomes −0.5, 1, 10¹⁶, −10¹⁶: −0.5 + 1 = 0.5, then 0.5 + 10¹⁶ → 10¹⁶ (the 0.5 is
+lost), then − 10¹⁶ → **0**. The rule works when all the numbers have the same sign, but not when
+large terms cancel each other.
+
+### 7. Loop in `long double`: does more precision help? Yes, but only here
+
+**Idea:** the same plain loop, with the running sum in `long double`. On x86 this is the 80-bit
+extended format, with 64 bits of mantissa instead of 53.
+
+Near 10¹⁶ the spacing becomes 2⁵³⁻⁶³ = 1/1024, so 10¹⁶ + 1 is stored exactly and the result is
+**0.5**. More precision only moves the problem further away: with larger numbers it comes back,
+e.g. `./floating_point_sum 1 1e20 -1e20 -0.5` fails again.
+
+### 8. Exact summation (Shewchuk): what is the true answer? 0.5
+
+**Idea** (Shewchuk, 1997; the algorithm behind Python's `math.fsum`): keep the running sum
+**exactly**, as a short list of doubles that do not overlap ("partials"). Each new number is
+added to the list with an *error-free transformation*: for two doubles a and b,
+
+hi = fl(a + b), lo = b − (hi − a) (with |a| ≥ |b|)
+
+gives two doubles with hi + lo = a + b **exactly** (hi is the rounded sum, lo the rounding
+error). Only at the end are the partials added into one double, correctly rounded.
+
+Result: **0.5**, the correctly rounded value of the exact sum. It is used here as the reference:
+it confirms that 0.5 is the right answer, and that the other methods are wrong because of
+rounding, not because of a bug.
+
+## Summary
+
+- The result of a floating-point sum depends on the **order** of the operations, because each
+  addition is rounded and addition is not associative.
+- The three required methods all lose the 1 when it is added to 10¹⁶, so they give −0.5.
+- **Kahan's compensation is not enough** when a term is larger than the running sum; Neumaier's
+  version fixes exactly this case.
+- Changing the order (pairwise, sorting) does not help when large terms cancel.
+- More precision (`long double`) helps only until the numbers become larger.
+- An exact summation (Shewchuk / `math.fsum`) always gives the correctly rounded result.
+
+One more surprise: `./floating_point_sum 0.1 0.2 0.3 -0.6` gives **2.8·10⁻¹⁷**, not 0, even
+with the exact method. The doubles closest to 0.1, 0.2, 0.3 and 0.6 are not exactly those
+decimal numbers, and their exact sum really is 2.8·10⁻¹⁷.
+
+## References
+
+- The lecture note on floating-point numbers: <https://codimd.infn.it/s/QGAx8wKwd>
+- Kahan summation algorithm (Wikipedia, linked in the exercise):
+  <https://en.wikipedia.org/wiki/Kahan_summation_algorithm>
+- W. Kahan, *Further remarks on reducing truncation errors*, Communications of the ACM **8**(1),
+  40 (1965). The original Kahan algorithm.
+- A. Neumaier, *Rundungsfehleranalyse einiger Verfahren zur Summation endlicher Summen*,
+  ZAMM (Zeitschrift für Angewandte Mathematik und Mechanik) **54**(1), 39–51 (1974). The
+  improved version (method 4).
+- J. R. Shewchuk, *Adaptive Precision Floating-Point Arithmetic and Fast Robust Geometric
+  Predicates*, Discrete & Computational Geometry **18**(3), 305–363 (1997). Exact sums with
+  error-free transformations (method 8).
+- T. J. Dekker, *A floating-point technique for extending the available precision*, Numerische
+  Mathematik **18**, 224–242 (1971). The error-free transformation hi + lo = a + b.
+- N. J. Higham, *The accuracy of floating point summation*, SIAM Journal on Scientific Computing
+  **14**(4), 783–799 (1993). Comparison of loop, pairwise, sorted and compensated summation.
+- N. J. Higham, *Accuracy and Stability of Numerical Algorithms*, 2nd ed., SIAM (2002),
+  chapter 4 "Summation".
+- D. Goldberg, *What every computer scientist should know about floating-point arithmetic*,
+  ACM Computing Surveys **23**(1), 5–48 (1991).
+- IEEE Standard for Floating-Point Arithmetic, IEEE 754-2019.
+- GSL (GNU Scientific Library) reference manual, *Vectors* (`gsl_vector_sum`):
+  <https://www.gnu.org/software/gsl/doc/html/vectors.html>
+- Python documentation, `math.fsum`: <https://docs.python.org/3/library/math.html#math.fsum>
