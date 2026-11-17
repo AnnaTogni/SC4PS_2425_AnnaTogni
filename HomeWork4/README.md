@@ -169,37 +169,128 @@ be told apart (resolution, this part).
 
 ## Part 5: Coupled oscillators
 
-**1. Equations of motion** (from `rhs()` in the code):
+This part refers to the program **`src/coupled_oscillators_fft.c`**. It:
+1. integrates the equations of motion of two coupled oscillators with a GSL ODE solver
+   (`rkf45`, a Runge–Kutta–Fehlberg method with adaptive step, tolerance 10⁻⁹);
+2. stores the position x<sub>1</sub>(t) of the first mass on a uniform time grid:
+   Δt = 0.125 s, N = 1024 samples, so T = 128 s;
+3. computes the FFT of x<sub>1</sub>(t) and compares its peaks with the theoretical
+   normal-mode frequencies.
 
-m ẍ<sub>1</sub> = −(k + k<sub>c</sub>) x<sub>1</sub> + k<sub>c</sub> x<sub>2</sub>
+With these values, the Nyquist frequency is 1/(2Δt) = 4 Hz and the bin spacing is
+Δf = 1/T = 0.0078 Hz, fine enough to resolve frequencies around 1 Hz.
 
-m ẍ<sub>2</sub> = k<sub>c</sub> x<sub>1</sub> − (k + k<sub>c</sub>) x<sub>2</sub>
+**2. The physical system** (answered first, since it explains the equations).
+Two identical masses m slide without friction along a line. Each is attached to a fixed wall
+by a spring of constant k, and the two masses are attached to each other by a *coupling*
+spring of constant k<sub>c</sub>:
 
-with m = 1 kg, k = `wall_k` = 25 N/m, k<sub>c</sub> = `coupling_k` = 7 N/m.
+wall – k – m – k<sub>c</sub> – m – k – wall
 
-**2. Physical system:** two identical masses, each connected to a wall by a spring k and to
-each other by a coupling spring k<sub>c</sub> (wall – k – m – k<sub>c</sub> – m – k – wall).
+x<sub>1</sub> and x<sub>2</sub> are the displacements of the masses from their rest positions
+(positive to the right). Values in the code: m = 1 kg, k = `wall_k` = 25 N/m,
+k<sub>c</sub> = `coupling_k` = 7 N/m. At t = 0 the first mass is pulled 0.1 m to the right
+and the second one is at rest: x<sub>1</sub> = 0.1 m, x<sub>2</sub> = 0, both velocities 0.
 
-**3. Normal modes:**
-- **In-phase** (x<sub>1</sub> = x<sub>2</sub>). The coupling spring is never stretched, so
-  ω² = k/m and f<sub>in</sub> = √(k/m)/2π = **0.79577 Hz**.
-- **Out-of-phase** (x<sub>1</sub> = −x<sub>2</sub>). The coupling spring is stretched by
-  2x, so ω² = (k + 2k<sub>c</sub>)/m and f<sub>out</sub> = √((k+2k<sub>c</sub>)/m)/2π =
-  **0.99392 Hz**.
+![The system and its two normal modes](images/coupled_system.png)
 
-**4. Why x<sub>1</sub>(t) has more than one frequency:** the initial condition
-x<sub>1</sub> = 0.1, x<sub>2</sub> = 0 is not a normal mode. It is a combination of both, with
-equal weight:
+**1. Equations of motion** (from `rhs()` in the code). On mass 1 act:
+- the wall spring, stretched by x<sub>1</sub>: force −k x<sub>1</sub>;
+- the coupling spring, stretched by (x<sub>2</sub> − x<sub>1</sub>): force
+  +k<sub>c</sub>(x<sub>2</sub> − x<sub>1</sub>).
 
-(0.1, 0) = 0.05·(1, 1) + 0.05·(1, −1),
+Mass 2 is the mirror image. Newton's law gives
 
-so x<sub>1</sub>(t) = 0.05 cos(ω<sub>in</sub>t) + 0.05 cos(ω<sub>out</sub>t). That gives two
-peaks of amplitude ≈ 0.05 each (measured 0.0486 and 0.0462). In the time domain, this sum
-shows up as beats: the energy goes back and forth between the two masses.
+m ẍ<sub>1</sub> = −k x<sub>1</sub> + k<sub>c</sub>(x<sub>2</sub> − x<sub>1</sub>) = −(k + k<sub>c</sub>) x<sub>1</sub> + k<sub>c</sub> x<sub>2</sub>
 
-**5. Why compare with theory:** it validates the whole pipeline (equations, ODE solver,
-sampling, FFT, frequency axis). If the peaks didn't match the analytic frequencies, something
-in the model or the code would be wrong. It is the numerical equivalent of a calibration.
+m ẍ<sub>2</sub> = −k x<sub>2</sub> − k<sub>c</sub>(x<sub>2</sub> − x<sub>1</sub>) = k<sub>c</sub> x<sub>1</sub> − (k + k<sub>c</sub>) x<sub>2</sub>
+
+The term k<sub>c</sub> x<sub>2</sub> in the first equation (and k<sub>c</sub> x<sub>1</sub> in
+the second) is the coupling: the motion of each mass depends on the other one. The code
+rewrites the two second-order equations as four first-order ones, for
+y = (x<sub>1</sub>, v<sub>1</sub>, x<sub>2</sub>, v<sub>2</sub>), which is the form an ODE
+solver needs.
+
+**3. Normal modes.** A *normal mode* is a motion in which both masses oscillate at the **same
+frequency**, with a fixed ratio between their amplitudes. Any motion of the system is a sum of
+normal modes.
+
+To find them, take the sum and the difference of the two equations of motion:
+
+- **sum:** m (ẍ<sub>1</sub> + ẍ<sub>2</sub>) = −k (x<sub>1</sub> + x<sub>2</sub>)
+- **difference:** m (ẍ<sub>1</sub> − ẍ<sub>2</sub>) = −(k + 2k<sub>c</sub>) (x<sub>1</sub> − x<sub>2</sub>)
+
+The coupling terms cancel: q<sub>+</sub> = x<sub>1</sub> + x<sub>2</sub> and
+q<sub>−</sub> = x<sub>1</sub> − x<sub>2</sub> each obey the equation of a *single*, independent
+harmonic oscillator. These are the two normal modes:
+
+| | In-phase mode | Out-of-phase mode |
+|---|---|---|
+| Motion | x<sub>1</sub> = x<sub>2</sub>: the masses move together, same direction | x<sub>1</sub> = −x<sub>2</sub>: the masses move in opposite directions (towards each other, then apart) |
+| Coupling spring | always the same length (never stretched), so it does nothing | stretched or compressed by 2x, so it adds a restoring force 2k<sub>c</sub>x |
+| ω² | k/m = 25 s⁻² | (k + 2k<sub>c</sub>)/m = 39 s⁻² |
+| ω | 5.000 rad/s | 6.245 rad/s |
+| f = ω/2π | **0.79577 Hz** | **0.99392 Hz** |
+| Period | 1.257 s | 1.006 s |
+
+The out-of-phase mode is faster because the coupling spring adds to the restoring force.
+(Equivalently, in matrix form m ẍ = −K x with K = [[k+k<sub>c</sub>, −k<sub>c</sub>],
+[−k<sub>c</sub>, k+k<sub>c</sub>]]: the normal modes are the eigenvectors (1, 1) and (1, −1)
+of K, and the eigenvalues k and k + 2k<sub>c</sub> give mω².)
+
+**4. Why x<sub>1</sub>(t) has more than one frequency.** The initial condition
+(x<sub>1</sub>, x<sub>2</sub>) = (0.1, 0) is *not* a normal mode: only one mass is pulled.
+It is a combination of both modes, with equal weight:
+
+(0.1, 0) = 0.05·(1, 1) [in-phase] + 0.05·(1, −1) [out-of-phase]
+
+Each mode then oscillates at its own frequency (the velocities start at 0, so as cosines):
+
+x<sub>1</sub>(t) = 0.05 cos(ω<sub>in</sub>t) + 0.05 cos(ω<sub>out</sub>t)
+
+x<sub>2</sub>(t) = 0.05 cos(ω<sub>in</sub>t) − 0.05 cos(ω<sub>out</sub>t)
+
+So x<sub>1</sub>(t) contains **two frequencies**, 0.796 Hz and 0.994 Hz, each with amplitude
+0.05 m, and the FFT shows **two peaks**. The program measures:
+
+| Mode | Theory | Measured peak | Amplitude (theory 0.05 m) |
+|---|---|---|---|
+| In-phase | 0.79577 Hz | 0.79688 Hz | 0.0486 m |
+| Out-of-phase | 0.99392 Hz | 0.99219 Hz | 0.0462 m |
+
+The measured frequencies differ from theory by less than one bin (Δf = 0.0078 Hz): the FFT can
+only return multiples of Δf. The amplitudes are a little below 0.05 m because the true
+frequencies fall between two bins, so part of the energy leaks into the neighbouring bins
+(spectral leakage, as in Part 4).
+
+**In the time domain: beats.** Two close frequencies added together give beats:
+
+x<sub>1</sub>(t) = 0.1 cos(½Δω t) · cos(ω̄ t), with Δω = ω<sub>out</sub> − ω<sub>in</sub> and
+ω̄ = (ω<sub>in</sub> + ω<sub>out</sub>)/2.
+
+The fast oscillation (≈ 0.9 Hz) is modulated by a slow envelope. Physically, the **energy
+moves back and forth between the two masses**: at t = 0 only mass 1 moves; after
+1/(2(f<sub>out</sub> − f<sub>in</sub>)) = 2.5 s mass 1 is almost still and mass 2 has all the
+motion; after 5.05 s the motion is back on mass 1, and so on.
+
+![Motion of the two masses and spectrum of x1](images/coupled_results.png)
+
+- **Top:** x<sub>1</sub>(t) and x<sub>2</sub>(t) (shifted down for clarity). The dots are the
+  samples written by the program (`output/coupled_oscillators_time.csv`), the lines are the
+  analytic solution above, and the dashed grey line is the beat envelope of x<sub>1</sub>.
+  When x<sub>1</sub> is small, x<sub>2</sub> is large, and vice versa.
+- **Bottom:** the FFT of x<sub>1</sub> computed by the program
+  (`output/coupled_oscillators_spectrum.csv`), with the two theoretical frequencies as dashed
+  lines.
+
+**5. Why compare with theory.** The program is a chain of steps: equations of motion → ODE
+solver → sampling on a grid → FFT → frequency axis. An error in *any* step (a wrong sign in
+`rhs()`, a solver that is not accurate enough, a wrong Δt or frequency axis) would move the
+peaks or create wrong ones. This system has an exact analytic solution, so we know where the
+peaks must be: if the numerical peaks fall on the theoretical frequencies (within one bin), the
+whole chain is validated at once. It is the numerical equivalent of calibrating an instrument
+with a known source. Once validated, the same program can be trusted on systems with no
+analytic solution (e.g. non-linear springs, more masses).
 
 ---
 
