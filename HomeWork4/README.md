@@ -7,6 +7,7 @@ Worksheet answers for the [myfft_tutorial](https://github.com/alexninogh/myfft_t
 |---|---|
 | `README.md` | Answers to the worksheet (this file) |
 | `ISSUES.md` | Errors found in the project, with the proposed solutions (opened as GitHub issues) |
+| `images/` | Figures used in this README |
 | `sampling_dft_fft/` | My own exercise: sampling, DFT vs FFT and aliasing in C (see its [README](sampling_dft_fft/README.md)) |
 
 All the numbers below come from actually running the project (`make run`, GSL 2.7.1, gcc).
@@ -59,16 +60,21 @@ does with the ODE solver output.
 
 ## Part 3: Sampling and aliasing (`undersampled`, f<sub>s</sub> = 128 Hz)
 
+This part refers to the program **`src/sampling_demo.c`**, case `undersampled`: the signal
+x(t) = sin(2π·50·t) + 0.7·sin(2π·120·t) sampled at f<sub>s</sub> = 128 Hz for 1 s.
+
 **2. Nyquist frequency:** f<sub>N</sub> = 128 / 2 = **64 Hz**.
 
 **3. Why 120 Hz can't be reconstructed:** 120 Hz > 64 Hz. With fewer than 2 samples per period,
 the samples do not contain enough information to tell 120 Hz apart from a lower frequency.
 
 **5. Why a high frequency appears as a false low frequency.**
-- **Physically:** the samples are like a stroboscope (or a car wheel in a film that seems to turn
-  slowly backwards). Between two samples the 120 Hz wave completes almost one full oscillation
-  (120/128 = 0.94 periods), so from one sample to the next it seems to have moved only by a small
-  step *backwards*: the same as a slow 8 Hz oscillation.
+- **Physically:** we only look at the wave 128 times per second. In the time between two
+  samples, the 120 Hz wave goes through *almost* one full oscillation (120/128 = 0.94 of a
+  period). So each new sample finds the wave almost where the previous one was, just slightly
+  behind. Joining the samples we see a wave that moves slowly: the same as an 8 Hz wave.
+  It is the same effect as the wheels of a car in a film, which can seem to turn slowly, or
+  even backwards: the camera takes too few pictures per second to follow the real rotation.
 - **Mathematically:** at the sampling times t<sub>n</sub> = n/f<sub>s</sub>,
 
   sin(2π·120·n/128) = sin(2π·(120 − 128)·n/128) = −sin(2π·8·n/128),
@@ -79,6 +85,15 @@ the samples do not contain enough information to tell 120 Hz apart from a lower 
 
 The program confirms it: peaks at 50 Hz (1.0000) and **8 Hz (0.7000)**. The 0.7 amplitude
 of the 120 Hz component has moved entirely to 8 Hz, where there is no real signal.
+
+![120 Hz sampled at 128 Hz appears at 8 Hz](images/aliasing_120Hz.png)
+
+- **Top:** only the 120 Hz component (blue). The black dots are the samples taken at 128 Hz:
+  they don't follow the fast blue wave, but lie exactly on a slow 8 Hz wave (red, dashed).
+- **Bottom:** the FFT spectrum computed by `src/sampling_demo.c`
+  (`output/undersampled_spectrum.csv`). There is no peak at 120 Hz (it is above the Nyquist
+  frequency, outside the plot); instead there is a false peak at 8 Hz with the same amplitude,
+  0.70.
 
 ---
 
