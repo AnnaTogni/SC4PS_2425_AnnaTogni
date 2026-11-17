@@ -275,10 +275,11 @@ motion; after 5.05 s the motion is back on mass 1, and so on.
 
 ![Motion of the two masses and spectrum of x1](images/coupled_results.png)
 
-- **Top:** x<sub>1</sub>(t) and x<sub>2</sub>(t) (shifted down for clarity). The dots are the
-  samples written by the program (`output/coupled_oscillators_time.csv`), the lines are the
-  analytic solution above, and the dashed grey line is the beat envelope of x<sub>1</sub>.
-  When x<sub>1</sub> is small, x<sub>2</sub> is large, and vice versa.
+- **Top and middle:** x<sub>1</sub>(t) (mass 1) and x<sub>2</sub>(t) (mass 2), both
+  centred on 0, on the same time axis. The dots are the samples written by the program
+  (`output/coupled_oscillators_time.csv`), the lines are the analytic solution above, and the
+  dashed grey lines are the beat envelopes. When the oscillation of mass 1 is large, mass 2 is
+  almost still (t = 0, 5, 10 s), and vice versa (t = 2.5, 7.5 s).
 - **Bottom:** the FFT of x<sub>1</sub> computed by the program
   (`output/coupled_oscillators_spectrum.csv`), with the two theoretical frequencies as dashed
   lines.
