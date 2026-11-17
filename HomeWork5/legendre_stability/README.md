@@ -23,12 +23,6 @@ List of actions: (1) implement the methods; (2) for ℓ = 0 … 50 compute absol
 errors; (3) plot the relative error versus ℓ for each x, and inspect the absolute error;
 (4) explain the numerical behaviour; (5) connect the result to the spherical harmonics.
 
-**Short answer.** The **forward** recurrence is stable for all the tested x (errors ~10⁻¹⁶,
-also at x = 0.99); the Miller-style **backward** procedure does **not** recover
-P<sub>ℓ</sub>(x) (errors of order 1, for every starting point L). Miller's algorithm works
-only when the wanted solution is *minimal*, which is not the case for P<sub>ℓ</sub> on
-|x| < 1.
-
 The sections below follow the list of actions.
 
 | File | Content |
