@@ -308,19 +308,16 @@ It shows a strong peak at 8 Hz (amplitude 0.7), where the input has no component
 
 ![make plot: sampling_spectra.png](images/make_plot_sampling_spectra.png)
 
-The time-domain plot `plots/sampling_signals.png` doesn't really show it: over the full 1 s the
-50 Hz and 120 Hz oscillations are too dense, and the curves look like an unreadable zigzag in
-which the slow 8 Hz oscillation can't be seen. In the gnuplot version, the top panel ("good
-sampling") also uses `every 2`, so half of its samples are dropped. See
-[issue 3 in ISSUES.md](ISSUES.md).
-
-![make plot: sampling_signals.png](images/make_plot_sampling_signals.png)
+The other figure, the time-domain plot `plots/sampling_signals.png`, doesn't show it: over the
+full 1 s the oscillations are so dense that the curves look like an unreadable zigzag, and the
+slow 8 Hz oscillation can't be seen (see [issue 3 in ISSUES.md](ISSUES.md)).
 
 **2. Limited frequency resolution:** the **short-record spectrum**:
-`plots/sampling_spectra.png`, bottom panel (figure above). The bars are 8 Hz apart, and 50 and
-55 Hz become one broad bump over the 48 and 56 Hz bins, with leakage spread over the whole
-axis (see Part 4). The bottom panel of `sampling_signals.png` shows the same thing in time: the
-0.125 s record contains less than one beat.
+`plots/sampling_spectra.png`, bottom panel. The bars are 8 Hz apart, so the frequency grid is
+visibly coarse, and 50 and 55 Hz become one broad bump over the 48 and 56 Hz bins, with no dip
+between them and with leakage spread over the whole axis (see Part 4).
+
+![make plot: sampling_spectra.png, bottom panel](images/make_plot_sampling_spectra.png)
 
 **3. Coupled oscillators:** `plots/coupled_oscillators_spectrum.png`. Yes, the two peaks line
 up with the normal-mode frequencies within one bin:
