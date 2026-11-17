@@ -88,6 +88,8 @@ of the 120 Hz component has moved entirely to 8 Hz, where there is no real signa
 
 ![120 Hz sampled at 128 Hz appears at 8 Hz](images/aliasing_120Hz.png)
 
+*Figure 1 — `images/aliasing_120Hz.png` (made for this README from the output of `src/sampling_demo.c`, case `undersampled`).*
+
 - **Top:** only the 120 Hz component (blue). The black dots are the samples taken at 128 Hz:
   they don't follow the fast blue wave, but lie exactly on a slow 8 Hz wave (red, dashed).
 - **Bottom:** the FFT spectrum computed by `src/sampling_demo.c`
@@ -136,6 +138,8 @@ peaks.
 
 ![Short record: 50 and 55 Hz are not resolved](images/resolution_short_record.png)
 
+*Figure 2 — `images/resolution_short_record.png` (made for this README from the output of `src/sampling_demo.c`, case `short_record`, N = 64).*
+
 - **Top:** the signal over 0.45 s. The red dashed envelope is the beat (one period = 0.2 s);
   the yellow band is the only part that is recorded (0.125 s, the 64 black samples).
 - **Bottom:** the spectrum computed by `src/sampling_demo.c` (`output/short_record_spectrum.csv`).
@@ -157,6 +161,8 @@ exactly on bins, 5 bins apart, and the program finds **50 Hz (1.0000) and 55 Hz 
 perfectly separated and without leakage.
 
 ![Longer record: 50 and 55 Hz are separated](images/resolution_longer_record.png)
+
+*Figure 3 — `images/resolution_longer_record.png` (made for this README: `src/sampling_demo.c` with N = 64, left, and N = 512, right).*
 
 Both spectra are computed by `src/sampling_demo.c`; the right one with N = 512 (the Option B
 change). Same signal and same sampling rate: only the record length is different.
@@ -193,6 +199,8 @@ k<sub>c</sub> = `coupling_k` = 7 N/m. At t = 0 the first mass is pulled 0.1 m to
 and the second one is at rest: x<sub>1</sub> = 0.1 m, x<sub>2</sub> = 0, both velocities 0.
 
 ![The system and its two normal modes](images/coupled_system.png)
+
+*Figure 4 — `images/coupled_system.png`: sketch of the system of `src/coupled_oscillators_fft.c` and of its two normal modes.*
 
 **1. Equations of motion** (from `rhs()` in the code). On mass 1 act:
 - the wall spring, stretched by x<sub>1</sub>: force −k x<sub>1</sub>;
@@ -275,6 +283,8 @@ motion; after 5.05 s the motion is back on mass 1, and so on.
 
 ![Motion of the two masses and spectrum of x1](images/coupled_results.png)
 
+*Figure 5 — `images/coupled_results.png` (made for this README from the output of `src/coupled_oscillators_fft.c`).*
+
 - **Top and middle:** x<sub>1</sub>(t) (mass 1) and x<sub>2</sub>(t) (mass 2), both
   centred on 0, on the same time axis. The dots are the samples written by the program
   (`output/coupled_oscillators_time.csv`), the lines are the analytic solution above, and the
@@ -302,33 +312,42 @@ folder without any modification. `make plot` first runs both programs (`make run
 gnuplot scripts `scripts/plot_sampling.gp` and `scripts/plot_coupled_oscillators.gp`, which
 write the figures in `plots/`. (`make plot-python` makes the same figures with matplotlib.)
 
-**1. Aliasing:** the **undersampled spectrum**: `plots/sampling_spectra.png`, middle panel.
+**1. Aliasing:** the **undersampled spectrum**: `plots/sampling_spectra.png`, middle panel
+(Figure 6).
 It shows a strong peak at 8 Hz (amplitude 0.7), where the input has no component: it is the
 120 Hz component, folded back below the Nyquist frequency of 64 Hz (see Part 3).
 
 ![make plot: sampling_spectra.png](images/make_plot_sampling_spectra.png)
+
+*Figure 6 — `plots/sampling_spectra.png`, made by `make plot`. For aliasing, look at the **middle** panel ("Undersampled spectrum").*
 
 The other figure, the time-domain plot `plots/sampling_signals.png`, doesn't show it: over the
 full 1 s the oscillations are so dense that the curves look like an unreadable zigzag, and the
 slow 8 Hz oscillation can't be seen (see [issue 3 in ISSUES.md](ISSUES.md)).
 
 **2. Limited frequency resolution:** the **short-record spectrum**:
-`plots/sampling_spectra.png`, bottom panel. The bars are 8 Hz apart, so the frequency grid is
+`plots/sampling_spectra.png`, bottom panel (Figure 7). The bars are 8 Hz apart, so the frequency grid is
 visibly coarse, and 50 and 55 Hz become one broad bump over the 48 and 56 Hz bins, with no dip
 between them and with leakage spread over the whole axis (see Part 4).
 
 ![make plot: sampling_spectra.png, bottom panel](images/make_plot_sampling_spectra.png)
 
-**3. Coupled oscillators:** `plots/coupled_oscillators_spectrum.png`. Yes, the two peaks line
-up with the normal-mode frequencies within one bin:
+*Figure 7 — `plots/sampling_spectra.png`, made by `make plot` (the same figure as Figure 6). For frequency resolution, look at the **bottom** panel ("Short-record spectrum").*
+
+**3. Coupled oscillators:** `plots/coupled_oscillators_spectrum.png` (Figure 8). Yes, the two
+peaks line up with the normal-mode frequencies within one bin:
 
 ![make plot: coupled_oscillators_spectrum.png](images/make_plot_coupled_oscillators_spectrum.png)
 
+*Figure 8 — `plots/coupled_oscillators_spectrum.png`, made by `make plot` (gnuplot version, without theoretical lines).*
+
 Note: the gnuplot version of this plot has **no theoretical reference lines**. The Python
-version, made with **`make plot-python`**, draws them as dashed lines, and shows directly that
-each peak sits on its theoretical frequency:
+version, made with **`make plot-python`** (Figure 9), draws them as dashed lines, and shows
+directly that each peak sits on its theoretical frequency:
 
 ![make plot-python: coupled_oscillators_spectrum.png](images/make_plot_python_coupled_oscillators_spectrum.png)
+
+*Figure 9 — `plots/coupled_oscillators_spectrum.png`, made by `make plot-python` (Python version, with the theoretical frequencies as dashed lines).*
 
 (In the Python script these theoretical lines are computed from spring constants written again
 inside the script, not read from the C program: with the default values they are correct, but
