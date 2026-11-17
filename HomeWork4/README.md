@@ -99,23 +99,71 @@ of the 120 Hz component has moved entirely to 8 Hz, where there is no real signa
 
 ## Part 4: Frequency resolution (`short_record`, 50 Hz + 55 Hz)
 
-**2. Record length:** T = N·Δt = 64 / 512 Hz = **0.125 s**.
+This part refers to the program **`src/sampling_demo.c`**, case `short_record`: the signal
+x(t) = sin(2π·50·t) + 0.85·sin(2π·55·t), sampled at f<sub>s</sub> = 512 Hz, but only
+N = 64 samples are taken.
 
-**3. Bin spacing:** Δf = f<sub>s</sub>/N = 1/T = **8 Hz**.
+**2. Record length.** The samples are Δt = 1/f<sub>s</sub> = 1/512 s apart, so
 
-**4. Why the two frequencies are hard to separate:**
-They are 5 Hz apart, less than one bin (8 Hz). The bins nearest to them are 48 Hz and 56 Hz,
-and neither frequency falls on a bin, so both leak into the neighbouring bins (spectral leakage).
+T = N·Δt = 64 / 512 Hz = **0.125 s**.
 
-The program reports only **one peak, at 48 Hz** (amplitude 0.8651). The plot shows tall bars at
-48 Hz and 56 Hz, but there is no dip between them, so they are not two resolved peaks: just one
-broad bump.
+**3. Bin spacing.** The FFT does not give a continuous spectrum: it gives the amplitude only on
+a grid of frequencies 0, Δf, 2Δf, 3Δf, …, called **bins**, with
 
-**5. What to change:** the **total acquisition time**. Δf = 1/T depends only on T. A plotting
-tool or a file format cannot create information that isn't in the data.
+Δf = f<sub>s</sub>/N = 1/T = 512 / 64 = **8 Hz**.
 
-Verified (Part 7, Option B): with N = 512 (T = 1 s, Δf = 1 Hz), the program finds
-**50 Hz (1.0000) and 55 Hz (0.8500)**, perfectly separated.
+So the FFT only "looks" at 0, 8, 16, …, 40, **48, 56**, 64, … Hz, and at nothing in between.
+Why 1/T: the FFT describes the signal as a sum of oscillations that complete a *whole number*
+of cycles in the record (1, 2, 3, … cycles in T). One cycle in 0.125 s is 8 Hz, two cycles is
+16 Hz, and so on.
+
+**4. Why the two frequencies are hard to separate.**
+- **They are closer than one bin.** 50 and 55 Hz are 5 Hz apart, but the bins are 8 Hz
+  apart. Both fall between the *same* two bins, 48 Hz and 56 Hz (50 Hz is at 6.25 bins, 55 Hz
+  at 6.875 bins). There is no bin between them, so the spectrum cannot show a dip separating
+  two peaks.
+- **Leakage.** Neither frequency falls exactly on a bin, so the energy of each one spreads
+  over the neighbouring bins (spectral leakage), which smears the spectrum further.
+- **The time-domain view: beats.** Two sines 5 Hz apart produce a *beat*: the amplitude of the
+  sum swells and fades with a period of 1/(55 − 50) = **0.2 s**. This slow beat is the only
+  sign that there are two frequencies and not one. In 0.125 s we see less than one beat, so
+  the signal looks like a single ~52 Hz sine whose amplitude changes a little. The information
+  needed to separate the two frequencies is simply not in the data.
+
+The program reports only **one peak, at 48 Hz** (amplitude 0.8651). The spectrum has tall bars
+at 48 Hz (0.87) and 56 Hz (0.76), but no dip between them: one broad bump, not two resolved
+peaks.
+
+![Short record: 50 and 55 Hz are not resolved](images/resolution_short_record.png)
+
+- **Top:** the signal over 0.45 s. The red dashed envelope is the beat (one period = 0.2 s);
+  the yellow band is the only part that is recorded (0.125 s, the 64 black samples).
+- **Bottom:** the spectrum computed by `src/sampling_demo.c` (`output/short_record_spectrum.csv`).
+  The blue dashed lines are the true frequencies: both fall between the 48 and 56 Hz bins.
+
+**Rule of thumb:** to separate two frequencies f<sub>1</sub> and f<sub>2</sub>, the record must
+be longer than 1/|f<sub>2</sub> − f<sub>1</sub>|, here 1/5 Hz = 0.2 s (in practice a few times
+longer, so that several bins lie between the peaks).
+
+**5. What to change: the total acquisition time.** Δf = 1/T depends *only* on T.
+- **The plotting tool** draws the numbers it receives: it cannot create bins that don't exist.
+- **The file format** stores the same numbers in another way: it adds no information.
+- A **higher sampling rate** would not help either: with the same T it gives more samples,
+  but Δf = f<sub>s</sub>/N = 1/T stays 8 Hz. A higher f<sub>s</sub> only raises the Nyquist
+  frequency, i.e. it shows *higher* frequencies, not *finer* ones.
+
+Verified (Part 7, Option B): with N = 512 samples (T = 1 s, Δf = 1 Hz), 50 and 55 Hz fall
+exactly on bins, 5 bins apart, and the program finds **50 Hz (1.0000) and 55 Hz (0.8500)**,
+perfectly separated and without leakage.
+
+![Longer record: 50 and 55 Hz are separated](images/resolution_longer_record.png)
+
+Both spectra are computed by `src/sampling_demo.c`; the right one with N = 512 (the Option B
+change). Same signal and same sampling rate: only the record length is different.
+
+**In short:** the sampling rate f<sub>s</sub> decides the **highest** frequency we can see
+(Nyquist, Part 3); the record length T decides **how close** two frequencies can be and still
+be told apart (resolution, this part).
 
 ---
 
