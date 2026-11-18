@@ -9,8 +9,6 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#include <gsl/gsl_cdf.h>
-
 unsigned long arg_ulong(int argc, char *argv[], int i, unsigned long def, const char *name)
 {
     if (i >= argc)
@@ -52,26 +50,4 @@ FILE *open_output(const char *name)
         exit(1);
     }
     return f;
-}
-
-double chi_square(const size_t *observed, const double *expected, size_t bins, size_t *dof,
-                  double *p_value)
-{
-    double chi2 = 0.0, obs = 0.0, exp = 0.0;
-    size_t merged = 0;
-    for (size_t k = 0; k < bins; k++) {
-        obs += (double)observed[k];
-        exp += expected[k];
-        // close the merged bin when it has enough expected counts (or at the end)
-        if (exp >= 5.0 || k == bins - 1) {
-            if (exp > 0.0) {
-                chi2 += (obs - exp) * (obs - exp) / exp;
-                merged++;
-            }
-            obs = exp = 0.0;
-        }
-    }
-    *dof = merged > 1 ? merged - 1 : 1;
-    *p_value = gsl_cdf_chisq_Q(chi2, (double)*dof);
-    return chi2;
 }

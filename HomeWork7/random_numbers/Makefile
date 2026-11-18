@@ -1,8 +1,8 @@
 CC     = gcc
 CFLAGS = -std=c11 -Wall -Wextra -Wpedantic -O2
-LDLIBS = -lgsl -lgslcblas -lm
+LDLIBS = -lm
 
-PROGRAMS = coin_tosses monte_carlo_pi square_uniform exponential empirical_cdf randu_planes
+PROGRAMS = coin_tosses monte_carlo_pi square_uniform exponential empirical_cdf
 
 # "make" builds the five programs and then prints how to use them
 all: $(PROGRAMS) help
@@ -20,7 +20,6 @@ run: $(PROGRAMS)
 	./square_uniform
 	./exponential
 	./empirical_cdf
-	./randu_planes
 
 # "make plot" runs everything and draws the figures in plots/
 plot: run
@@ -38,13 +37,12 @@ help:
 	@echo "  ./square_uniform [n] [bins] [seed]   3. Y = U^2: histogram vs 1/(2 sqrt(y))"
 	@echo "  ./exponential    [n] [bins] [seed]   4. Y = -ln(1-U)/1.5: histogram vs the pdf"
 	@echo "  ./empirical_cdf  [n] [seed]          5. empirical CDF of the sample of 4"
-	@echo "  ./randu_planes   [n] [seed]          bonus: RANDU triples on 15 planes"
 	@echo ""
-	@echo "Defaults: N = 1e5, N_max = 1e7, R = 20, n = 2e5 (1e6 triples for randu_planes)."
+	@echo "Defaults: N = 1e5, N_max = 1e7, R = 20, n = 2e5."
 	@echo "Results go to output/*.csv."
 	@echo ""
 	@echo "Other commands:"
-	@echo "  make run     run the five exercises and the bonus"
+	@echo "  make run     run the five exercises"
 	@echo "  make plot    run them and draw plots/*.png (needs Python with matplotlib)"
 	@echo "  make clean   delete the programs and output/ (plots/ is kept)"
 	@echo ""
