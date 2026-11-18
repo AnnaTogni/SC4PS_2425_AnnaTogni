@@ -57,15 +57,14 @@ for (chunk = 0; chunk < number_of_chunks; chunk++) {
 }
 ```
 
-The assignment warns that its pseudocode "may contain errors". Two points must be changed when
-writing it in C:
-1. **CEILING(n / chunk_size):** in C, `n / chunk_size` between two integers is *already
-   truncated*, so `ceil(n / chunk_size)` gives 12 instead of 13 for n = 100, chunk_size = 8. The
-   integer formula `(n + chunk_size − 1) / chunk_size` gives the correct 13.
-2. **current_start = chunk_index · chunk_size + 1:** the pseudocode counts from 1, C arrays from
-   0. Copied literally, it skips element 0 and writes one element past the end of the array. In C
-   the chunk k covers the elements from `k·chunk_size` to `min((k+1)·chunk_size, n) − 1`; with
-   n = 100 and chunk_size = 8 there are 12 chunks of 8 elements and a last one of 4.
+Two details of the implementation in C:
+1. **Number of chunks:** CEILING(n / chunk_size) is computed with integers as
+   `(n + chunk_size − 1) / chunk_size`, which gives 13 for n = 100, chunk_size = 8. (In C,
+   `n / chunk_size` between two integers is already truncated, so `ceil(n / chunk_size)` would
+   give 12.)
+2. **Indices:** C arrays start from 0, so the chunk k covers the elements from `k·chunk_size` to
+   `min((k+1)·chunk_size, n) − 1`; with n = 100 and chunk_size = 8 there are 12 chunks of 8
+   elements and a last one of 4.
 
 **Check: d is the same as in the original code.** The program also computes d with the original
 single loop and compares the two vectors element by element. Every element is computed with
