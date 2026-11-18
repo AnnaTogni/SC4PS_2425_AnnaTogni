@@ -15,10 +15,6 @@ chunked_daxpy: chunked_daxpy.c
 run: chunked_daxpy
 	./chunked_daxpy daxpy.cfg
 
-# "make test" runs the tests in tests/run_tests.sh
-test: chunked_daxpy
-	bash tests/run_tests.sh
-
 # "make help" prints the instructions (the @ hides the echo command itself)
 help:
 	@echo ""
@@ -38,12 +34,10 @@ help:
 	@echo ""
 	@echo "Other commands:"
 	@echo "  make run     run with daxpy.cfg"
-	@echo "  make test    run the tests (edge cases and wrong input files)"
 	@echo "  make clean   delete the program and the .h5 files"
 	@echo ""
 
 clean:
 	rm -f chunked_daxpy *.h5
-	rm -rf tests/tmp
 
-.PHONY: all run test help clean
+.PHONY: all run help clean

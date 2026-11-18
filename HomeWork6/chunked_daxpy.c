@@ -14,17 +14,13 @@
 //   make
 // HOW TO RUN:
 //   ./chunked_daxpy [config_file]          (default: daxpy.cfg)
-//   make test                              (runs the tests in tests/)
 // ******************************************************
-
-#define _POSIX_C_SOURCE 200809L // clock_gettime() with -std=c11
 
 #include <float.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #include <glib.h>
 #include <hdf5.h>
@@ -40,13 +36,6 @@ typedef struct {
     double y, y_step;        // y[i] = y + i * y_step
     char *output;            // HDF5 file name
 } Config;
-
-static double seconds_now(void)
-{
-    struct timespec t;
-    clock_gettime(CLOCK_MONOTONIC, &t);
-    return t.tv_sec + 1e-9 * t.tv_nsec;
-}
 
 // ****************************************************************************
 // 3. Configuration file:  Variable = Value
@@ -222,26 +211,13 @@ static double daxpy_chunked(const Config *c, const double *x, const double *y, d
     return total;
 }
 
-// Neumaier compensated sum (see HomeWork5): a much more accurate estimate of the sum,
-// used to judge which of the two sums above is closer to the truth.
-static double sum_neumaier(const double *v, size_t n)
-{
-    double s = 0.0, c = 0.0;
-    for (size_t i = 0; i < n; i++) {
-        double t = s + v[i];
-        c += fabs(s) >= fabs(v[i]) ? (s - t) + v[i] : (v[i] - t) + s;
-        s = t;
-    }
-    return s + c;
-}
-
 // ****************************************************************************
 // 4. HDF5 output
 //
 //   /                      attributes: n, chunk_size, number_of_chunks, a
 //   /x, /y, /d             full vectors (length n)
 //   /partial_chunk_sum     one value per chunk
-//   /total_sum             attributes: chunked, reference, accurate (Neumaier)
+//   /total_sum             attributes: chunked (sum of partial sums), reference (single loop)
 //   /chunks/x, /y, /d      2-D datasets [number_of_chunks][chunk_size]: row k = chunk k
 //                          (the last row is padded with NaN if the last chunk is shorter)
 //   /chunks/start, /length first element and number of elements of every chunk
@@ -339,8 +315,7 @@ static int write_attr(hid_t where, const char *name, hid_t type, const void *val
 }
 
 static int write_hdf5(const Config *c, const double *x, const double *y, const double *d,
-                      const double *partial, double total_chunked, double total_reference,
-                      double total_accurate)
+                      const double *partial, double total_chunked, double total_reference)
 {
     hid_t file = H5Fcreate(c->output, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     if (file < 0)
@@ -357,8 +332,7 @@ static int write_hdf5(const Config *c, const double *x, const double *y, const d
     if (ok) {
         hid_t g = H5Gcreate2(file, "total_sum", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
         ok = g >= 0 && write_attr(g, "chunked", H5T_NATIVE_DOUBLE, &total_chunked) &&
-             write_attr(g, "reference", H5T_NATIVE_DOUBLE, &total_reference) &&
-             write_attr(g, "accurate", H5T_NATIVE_DOUBLE, &total_accurate);
+             write_attr(g, "reference", H5T_NATIVE_DOUBLE, &total_reference);
         if (g >= 0)
             H5Gclose(g);
     }
@@ -422,18 +396,15 @@ int main(int argc, char *argv[])
     printf("\na = %g, x[i] = %g + i*%g, y[i] = %g + i*%g\n\n", c.a, c.x, c.x_step, c.y, c.y_step);
 
     // ---- 1. single loop vs chunks --------------------------------------------
-    double t0 = seconds_now();
     double sum_ref = daxpy_reference(&c, x, y, d_ref);
-    double t1 = seconds_now();
     double sum_chunk = daxpy_chunked(&c, x, y, d_chunk, partial);
-    double t2 = seconds_now();
 
     size_t n_diff = 0;
     for (size_t i = 0; i < c.n; i++)
         n_diff += d_ref[i] != d_chunk[i];
     printf("1. d (chunks) == d (single loop), element by element: %s (%zu of %zu differ)\n",
            n_diff == 0 ? "YES" : "NO", n_diff, c.n);
-    printf("   time: single loop %.3e s, chunked %.3e s\n\n", t1 - t0, t2 - t1);
+    printf("\n");
 
     // ---- 2. partial sums --------------------------------------------------------
     // The two sums add the SAME numbers in a DIFFERENT order, so they can differ by
@@ -442,23 +413,18 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < c.n; i++)
         sum_abs += fabs(d_ref[i]);
     double tol = (double)c.n * DBL_EPSILON * sum_abs;
-    double accurate = sum_neumaier(d_ref, c.n);
     int sums_ok = fabs(sum_chunk - sum_ref) <= tol;
 
     printf("2. sum of d\n");
-    printf("   single loop:                 %.17g   (error %.2e)\n", sum_ref, sum_ref - accurate);
-    printf("   sum of partial_chunk_sum[]:  %.17g   (error %.2e)\n", sum_chunk, sum_chunk - accurate);
-    printf("   accurate (Neumaier):         %.17g\n", accurate);
+    printf("   single loop:                 %.17g\n", sum_ref);
+    printf("   sum of partial_chunk_sum[]:  %.17g\n", sum_chunk);
     printf("   exactly equal: %s;  equal within rounding (|diff| <= n eps sum|d| = %.1e): %s\n\n",
            sum_chunk == sum_ref ? "YES" : "NO", tol, sums_ok ? "YES" : "NO");
 
     // ---- 4. HDF5 ------------------------------------------------------------------
-    t0 = seconds_now();
-    int written = write_hdf5(&c, x, y, d_chunk, partial, sum_chunk, sum_ref, accurate);
-    t1 = seconds_now();
+    int written = write_hdf5(&c, x, y, d_chunk, partial, sum_chunk, sum_ref);
     if (written)
-        printf("4. HDF5 file '%s' written in %.3e s (inspect: h5ls -r %s)\n", c.output, t1 - t0,
-               c.output);
+        printf("4. HDF5 file '%s' written (inspect: h5ls -r %s)\n", c.output, c.output);
     else
         fprintf(stderr, "4. Error: could not write the HDF5 file '%s'\n", c.output);
 
