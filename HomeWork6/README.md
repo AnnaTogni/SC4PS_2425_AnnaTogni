@@ -119,8 +119,8 @@ output = daxpy_chunks.h5
 | `y` | the value of every element of the vector y |
 | `output` | name of the HDF5 file (optional, default `daxpy_chunks.h5`) |
 
-**Reading the file.** As the assignment suggests, the file is read with an existing library,
-GLib's `GKeyFile`, which parses `key = value` files. `GKeyFile` expects the keys to be inside a
+**Reading the file.** The file is read with GLib's `GKeyFile`, an existing library that parses
+`key = value` files. `GKeyFile` expects the keys to be inside a
 `[group]` section, so the program adds a `[daxpy]` line in front of the file's content before
 parsing it.
 
