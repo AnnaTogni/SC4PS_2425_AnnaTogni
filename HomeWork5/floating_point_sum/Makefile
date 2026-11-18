@@ -27,7 +27,6 @@ help:
 	@echo "Examples:"
 	@echo "  ./floating_point_sum                    lecture example"
 	@echo "  ./floating_point_sum 1e16 1 -1e16       the 1 is lost by the plain loop"
-	@echo "  ./floating_point_sum 0.1 0.2 0.3 -0.6   not 0: 0.1, 0.2 ... are not exact in binary"
 	@echo ""
 	@echo "Other commands:"
 	@echo "  make run     run the lecture example"

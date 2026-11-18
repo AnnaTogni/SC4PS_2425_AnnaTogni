@@ -183,9 +183,6 @@ rounding, not because of a bug.
 - More precision (`long double`) helps only until the numbers become larger.
 - An exact summation (Shewchuk / `math.fsum`) always gives the correctly rounded result.
 
-One more surprise: `./floating_point_sum 0.1 0.2 0.3 -0.6` gives **2.8·10⁻¹⁷**, not 0, even
-with the exact method. The doubles closest to 0.1, 0.2, 0.3 and 0.6 are not exactly those
-decimal numbers, and their exact sum really is 2.8·10⁻¹⁷.
 
 ## References
 
