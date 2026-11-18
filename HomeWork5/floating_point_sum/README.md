@@ -183,7 +183,6 @@ rounding, not because of a bug.
 - More precision (`long double`) helps only until the numbers become larger.
 - An exact summation (Shewchuk / `math.fsum`) always gives the correctly rounded result.
 
-
 ## References
 
 - The lecture note on floating-point numbers: <https://codimd.infn.it/s/QGAx8wKwd>
