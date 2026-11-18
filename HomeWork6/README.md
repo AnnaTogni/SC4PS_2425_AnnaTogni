@@ -1,7 +1,8 @@
 # HomeWork 06: Split the work
 
-The daxpy code of HomeWork 2, **d = a·x + y**, rewritten in C to follow the four points of the
-assignment:
+The daxpy code of HomeWork 2, **d = a·x + y**, with the same vectors: a is a scalar, all the
+elements of x are equal to x and all the elements of y are equal to y (here a = 3, x = 0.1,
+y = 7.1, as in HomeWork 2). It is rewritten in C to follow the four points of the assignment:
 
 1. compute d **chunk by chunk** instead of with a single loop, and check that d is the same;
 2. sum the elements of every chunk into `partial_chunk_sum[]`, sum the partial sums, and check
@@ -32,14 +33,14 @@ Output with the given `daxpy.cfg`:
 
 ```
 n = 100, chunk_size = 8, number_of_chunks = 13 (last chunk: 4 elements)
-a = 3, x[i] = 0.1 + i*0.01, y[i] = 7.1 + i*0
+a = 3, every x[i] = 0.1, every y[i] = 7.1
 
 1. d (chunks) == d (single loop), element by element: YES (0 of 100 differ)
 
 2. sum of d
-   single loop:                 888.50000000000011
-   sum of partial_chunk_sum[]:  888.49999999999989
-   exactly equal: NO;  equal within rounding (|diff| <= n eps sum|d| = 2.0e-11): YES
+   single loop:                 739.99999999999864
+   sum of partial_chunk_sum[]:  740.00000000000011
+   exactly equal: NO;  equal within rounding (|diff| <= n eps sum|d| = 1.6e-11): YES
 
 4. HDF5 file 'daxpy_chunks.h5' written (inspect: h5ls -r daxpy_chunks.h5)
 ```
@@ -80,11 +81,12 @@ Inside the loop over the chunks, the elements of each chunk are added into
 and that is correct. The single loop computes ((d₀ + d₁) + d₂) + …, while the chunked version
 first adds inside each chunk and then adds the partial sums: these are the **same numbers added
 in a different order**, and floating-point addition is not associative (see HomeWork 5). With
-the given input file the two sums are 888.50000000000011 and 888.49999999999989: equal except in
-the last digits.
+the given input file every dᵢ is 3·0.1 + 7.1 = 7.3999999999999995 (as in HomeWork 2), and the two
+sums of the 100 elements are 739.99999999999864 and 740.00000000000011: equal except in the last
+digits.
 
 So the program checks that they agree **within the rounding error** of a sum of n terms,
-|difference| ≤ n·ε·Σ|dᵢ| (here 2·10⁻¹¹), instead of comparing them with `==`.
+|difference| ≤ n·ε·Σ|dᵢ| (here 1.6·10⁻¹¹), instead of comparing them with `==`.
 
 ## 3. Input file
 
@@ -99,12 +101,11 @@ n = 100
 # give EITHER chunk_size OR number_of_chunks
 chunk_size = 8
 
-# d[i] = a * x[i] + y[i]  with  x[i] = x + i * x_step,  y[i] = y + i * y_step
+# d[i] = a * x[i] + y[i]: a is a scalar, every element of x is x, every element of y is y
+# (the values of HomeWork 2)
 a = 3
 x = 0.1
-x_step = 0.01
 y = 7.1
-y_step = 0
 
 # HDF5 output file (.h5 is added if missing)
 output = daxpy_chunks.h5
@@ -115,8 +116,8 @@ output = daxpy_chunks.h5
 | `n` | length of the vectors |
 | `chunk_size` *or* `number_of_chunks` | how to split the work: give one of the two, the other is computed |
 | `a` | the scalar in d = a·x + y |
-| `x`, `x_step` | the vector x: x[i] = x + i·x_step (`x_step` optional, default 0) |
-| `y`, `y_step` | the vector y: y[i] = y + i·y_step (`y_step` optional, default 0) |
+| `x` | the value of every element of the vector x |
+| `y` | the value of every element of the vector y |
 | `output` | name of the HDF5 file (optional, default `daxpy_chunks.h5`) |
 
 **Reading the file.** As the assignment suggests, the file is read with an existing library,

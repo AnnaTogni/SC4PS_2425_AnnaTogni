@@ -1,6 +1,7 @@
 // HomeWork6 -- Split the work: daxpy in chunks, partial sums, config file, HDF5
 //
-//   d[i] = a * x[i] + y[i],   i = 0 ... n-1,   with x[i] = x + i * x_step, y[i] = y + i * y_step
+//   d[i] = a * x[i] + y[i],   i = 0 ... n-1,   as in HomeWork2: a is a scalar, and all the
+//   elements of x are equal to x, all the elements of y are equal to y
 //
 //   1. compute d with a single loop (reference) and again chunk by chunk
 //      -> check that the two d vectors are identical
@@ -32,8 +33,8 @@ typedef struct {
     size_t chunk_size;       // elements per chunk
     size_t number_of_chunks; // ceiling(n / chunk_size)
     double a;
-    double x, x_step;        // x[i] = x + i * x_step
-    double y, y_step;        // y[i] = y + i * y_step
+    double x;                // every element of the vector x
+    double y;                // every element of the vector y
     char *output;            // HDF5 file name
 } Config;
 
@@ -85,8 +86,8 @@ static int get_double(GKeyFile *kf, const char *key, double *out, int required, 
 
 static int load_config(const char *path, Config *c)
 {
-    static const char *known[] = {"n", "chunk_size", "number_of_chunks", "a", "x", "x_step",
-                                  "y", "y_step", "output", NULL};
+    static const char *known[] = {"n", "chunk_size", "number_of_chunks", "a", "x", "y",
+                                  "output", NULL};
     gchar *raw = NULL;
     GError *err = NULL;
     int ok = 0;
@@ -145,9 +146,7 @@ static int load_config(const char *path, Config *c)
     c->number_of_chunks = (c->n + c->chunk_size - 1) / c->chunk_size;
 
     if (!get_double(kf, "a", &c->a, 1, 0, path) || !get_double(kf, "x", &c->x, 1, 0, path) ||
-        !get_double(kf, "y", &c->y, 1, 0, path) ||
-        !get_double(kf, "x_step", &c->x_step, 0, 0.0, path) ||
-        !get_double(kf, "y_step", &c->y_step, 0, 0.0, path))
+        !get_double(kf, "y", &c->y, 1, 0, path))
         goto done;
 
     c->output = g_key_file_get_string(kf, GROUP, "output", NULL);
@@ -384,8 +383,8 @@ int main(int argc, char *argv[])
         goto cleanup;
     }
     for (size_t i = 0; i < c.n; i++) {
-        x[i] = c.x + (double)i * c.x_step;
-        y[i] = c.y + (double)i * c.y_step;
+        x[i] = c.x;
+        y[i] = c.y;
     }
 
     printf("Config file:      %s\n", path);
@@ -393,7 +392,7 @@ int main(int argc, char *argv[])
            c.number_of_chunks);
     if (c.n % c.chunk_size != 0)
         printf(" (last chunk: %zu elements)", c.n - (c.number_of_chunks - 1) * c.chunk_size);
-    printf("\na = %g, x[i] = %g + i*%g, y[i] = %g + i*%g\n\n", c.a, c.x, c.x_step, c.y, c.y_step);
+    printf("\na = %g, every x[i] = %g, every y[i] = %g\n\n", c.a, c.x, c.y);
 
     // ---- 1. single loop vs chunks --------------------------------------------
     double sum_ref = daxpy_reference(&c, x, y, d_ref);
