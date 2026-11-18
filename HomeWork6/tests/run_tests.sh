@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Tests for chunked_daxpy: run with "make test" from the chunked_daxpy folder.
+# Tests for chunked_daxpy: run with "make test" from the HomeWork6 folder.
 #
 # Each test writes a small config file, runs the program and checks
 #   - the exit code (0 = all checks passed, 1 = bad input, 2 = a check failed)
