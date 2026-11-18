@@ -147,9 +147,8 @@ static void study(double x, int lmax, int L)
     double *fwd = malloc(n * sizeof(*fwd));
     double *bwd = malloc(n * sizeof(*bwd));
     double *gsl = malloc(n * sizeof(*gsl));
-    double *cond = malloc(n * sizeof(*cond));
     quad *ref = malloc(n * sizeof(*ref));
-    if (!fwd || !bwd || !gsl || !cond || !ref) {
+    if (!fwd || !bwd || !gsl || !ref) {
         fprintf(stderr, "Error: not enough memory\n");
         exit(1);
     }
@@ -160,15 +159,6 @@ static void study(double x, int lmax, int L)
     forward_quad(xq, lmax, ref);
     gsl_sf_legendre_Pl_array(lmax, x, gsl);
 
-    // Relative condition number of P_l at x:  kappa = |x P_l'(x) / P_l(x)|,
-    // with P_l'(x) = l (x P_l - P_{l-1}) / (x^2 - 1). It says how much a relative
-    // error in x (e.g. from rounding x to a double) is amplified in P_l(x).
-    cond[0] = 0.0;
-    for (int l = 1; l <= lmax; l++) {
-        quad dP = (quad)l * (xq * ref[l] - ref[l - 1]) / (xq * xq - 1);
-        cond[l] = ref[l] != 0 ? (double)fabsq(xq * dP / ref[l]) : INFINITY;
-    }
-
     char tag[32], path[128];
     x_tag(x, tag, sizeof(tag));
     snprintf(path, sizeof(path), OUTPUT_DIR "/legendre_P_x%s.csv", tag);
@@ -178,7 +168,7 @@ static void study(double x, int lmax, int L)
         exit(1);
     }
     fprintf(f, "l,x,forward,backward_miller,reference_quad,gsl,abs_err_forward,rel_err_forward,"
-               "abs_err_backward,rel_err_backward,condition_number\n");
+               "abs_err_backward,rel_err_backward\n");
 
     double max_abs_f = 0, max_rel_f = 0, max_abs_b = 0, max_rel_b = 0;
     int gsl_equals_forward = 1;
@@ -197,8 +187,8 @@ static void study(double x, int lmax, int L)
 
         char refbuf[48];
         quadmath_snprintf(refbuf, sizeof(refbuf), "%.25Qe", ref[l]);
-        fprintf(f, "%d,%.17g,%.17e,%.17e,%s,%.17e,%.6e,%.6e,%.6e,%.6e,%.6e\n", l, x, fwd[l],
-                bwd[l], refbuf, gsl[l], ea_f, er_f, ea_b, er_b, cond[l]);
+        fprintf(f, "%d,%.17g,%.17e,%.17e,%s,%.17e,%.6e,%.6e,%.6e,%.6e\n", l, x, fwd[l],
+                bwd[l], refbuf, gsl[l], ea_f, er_f, ea_b, er_b);
     }
     fclose(f);
 
@@ -210,7 +200,6 @@ static void study(double x, int lmax, int L)
     free(fwd);
     free(bwd);
     free(gsl);
-    free(cond);
     free(ref);
 }
 

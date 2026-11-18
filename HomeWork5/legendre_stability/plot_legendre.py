@@ -62,11 +62,6 @@ def error_figure(files, kind, filename):
         d = read(path)
         ax.semilogy(d["l"], abs_or_floor(d[f"{kind}_err_forward"]), **FORWARD)
         ax.semilogy(d["l"], abs_or_floor(d[f"{kind}_err_backward"]), **BACKWARD)
-        if kind == "rel":
-            # Error that rounding x itself would cause: kappa * eps (conditioning, not the algorithm)
-            ax.semilogy(d["l"], abs_or_floor([c * EPS for c in d["condition_number"]]),
-                        color="gray", linestyle="--", linewidth=1.2,
-                        label=r"$\kappa_\ell(x)\,\varepsilon$ (conditioning)")
         ax.axhline(EPS, color="black", linestyle=":", linewidth=1, label=r"$\varepsilon$ = 2.2e-16")
         ax.axhline(1.0, color="black", linewidth=0.8, alpha=0.5)
         ax.set_title(f"x = {d['x'][0]:g}")
