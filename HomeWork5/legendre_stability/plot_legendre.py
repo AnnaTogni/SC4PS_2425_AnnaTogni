@@ -20,7 +20,6 @@ import matplotlib.pyplot as plt
 
 OUTPUT_DIR = Path("output")
 PLOT_DIR = Path("plots")
-EPS = 2.220446049250313e-16  # double precision machine epsilon
 FLOOR = 1e-18                # errors that are exactly 0 are drawn at this level
 
 FORWARD = dict(color="tab:blue", marker="o", markersize=3, linewidth=1.5, label="forward")
@@ -62,7 +61,6 @@ def error_figure(files, kind, filename):
         d = read(path)
         ax.semilogy(d["l"], abs_or_floor(d[f"{kind}_err_forward"]), **FORWARD)
         ax.semilogy(d["l"], abs_or_floor(d[f"{kind}_err_backward"]), **BACKWARD)
-        ax.axhline(EPS, color="black", linestyle=":", linewidth=1, label=r"$\varepsilon$ = 2.2e-16")
         ax.axhline(1.0, color="black", linewidth=0.8, alpha=0.5)
         ax.set_title(f"x = {d['x'][0]:g}")
         ax.set_xlabel(r"degree $\ell$")
