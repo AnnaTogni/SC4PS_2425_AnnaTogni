@@ -55,7 +55,7 @@ instead of 70:
 **Is there a quicker way, without comparing every element?** Yes: compare **one number
 instead of $N^2$**. The sum of all the elements of C is known in advance:
 - `ones`: $\sum_{ij} C_{ij} = N^2 \cdot N a b = N^3 a b$
-- `identity`: $\sum_{ij} C_{ij} = \operatorname{tr} C = N a b$
+- `identity`: $\sum_{ij} C_{ij} = \mathrm{tr}(C) = N a b$
 
 So one sum and **a single comparison** are enough.
 
