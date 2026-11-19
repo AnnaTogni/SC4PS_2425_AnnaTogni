@@ -69,31 +69,30 @@ x² + y² ≤ 1 estimates its area π/4, so π_N = 4·(points inside)/N.
 started from two different seeds, 123 for the x coordinates and 987654321 for the y
 coordinates.
 
-**Error.** Each point is "inside" with probability p = π/4, so the theoretical error is
-σ = √(π(4−π)/N) ≈ 1.64/√N. Every N is repeated R = 20 times (the streams simply continue) to
-measure the RMS error:
+**Error.** Each point is "inside" with probability p = π/4, so the expected error of π_N is
+σ = √(π(4−π)/N) ≈ 1.64/√N. The program estimates π for N = 10, 10², …, 10⁷ and compares the
+absolute error |π_N − π| with σ:
 
-| N | π (1st run) | Error | RMS error (20 runs) | σ theory |
-|---|---|---|---|---|
-| 10 | 4.0000000 | 8.6·10⁻¹ | 5.5·10⁻¹ | 5.2·10⁻¹ |
-| 10² | 3.2000000 | 5.8·10⁻² | 1.4·10⁻¹ | 1.6·10⁻¹ |
-| 10³ | 3.1600000 | 1.8·10⁻² | 5.8·10⁻² | 5.2·10⁻² |
-| 10⁴ | 3.1412000 | −3.9·10⁻⁴ | 1.9·10⁻² | 1.6·10⁻² |
-| 10⁵ | 3.1482000 | 6.6·10⁻³ | 5.1·10⁻³ | 5.2·10⁻³ |
-| 10⁶ | 3.1433960 | 1.8·10⁻³ | 1.7·10⁻³ | 1.6·10⁻³ |
-| 10⁷ | 3.1419312 | 3.4·10⁻⁴ | 5.0·10⁻⁴ | 5.2·10⁻⁴ |
-
-**Fitted slope:** RMS error ∝ N^b with **b = −0.500** (theory −0.5).
+| N | π_N | \|π_N − π\| | σ theory |
+|---|---|---|---|
+| 10 | 4.0000000 | 8.6·10⁻¹ | 5.2·10⁻¹ |
+| 10² | 3.0000000 | 1.4·10⁻¹ | 1.6·10⁻¹ |
+| 10³ | 3.1280000 | 1.4·10⁻² | 5.2·10⁻² |
+| 10⁴ | 3.1360000 | 5.6·10⁻³ | 1.6·10⁻² |
+| 10⁵ | 3.1412000 | 3.9·10⁻⁴ | 5.2·10⁻³ |
+| 10⁶ | 3.1418480 | 2.6·10⁻⁴ | 1.6·10⁻³ |
+| 10⁷ | 3.1410156 | 5.8·10⁻⁴ | 5.2·10⁻⁴ |
 
 ![Monte Carlo pi](plots/monte_carlo_pi.png)
 
 **Comment.**
-- **The error decreases like 1/√N.** Every extra correct digit costs 100× more points, and
-  10⁷ points give only ~3 correct decimals. The 1/√N law doesn't depend on the dimension of
-  the integral, which is why Monte Carlo wins for high-dimensional integrals.
-- **A single run is not a measure of the error.** At N = 10⁴, the first run (3.1412, error
-  3.9·10⁻⁴) is 50× more accurate than the typical error at that N (1.9·10⁻²), almost as
-  accurate as 10⁷ points. It was lucky. Only the RMS over many runs follows the 1/√N law.
+- **The error decreases like 1/√N.** Over six orders of magnitude of N the error goes from
+  ~1 to ~10⁻³ and stays below or around σ ≈ 1.64/√N: every extra correct digit costs 100×
+  more points, and 10⁷ points give only ~3 correct decimals.
+- **The error of a single estimate fluctuates.** σ is only the typical size of the error, so
+  for a given N the error can be smaller than σ, as at N = 10⁵ and 10⁶, and it does not
+  always decrease from one N to the next: at N = 10⁷ it is slightly larger than at 10⁶,
+  but still about one σ.
 
 ## 3. Change of variables: Y = U²
 

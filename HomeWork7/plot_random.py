@@ -65,9 +65,7 @@ def monte_carlo_pi():
     d = read("monte_carlo_pi.csv")
     N = d["N"]
     fig, ax = plt.subplots(figsize=(7.5, 5), constrained_layout=True)
-    ax.loglog(N, [abs(e) for e in d["error_first_run"]], "o", color="tab:blue",
-              label=r"$|\pi_N - \pi|$, single run")
-    ax.loglog(N, d["rms_error"], "s-", color="tab:red", label="RMS error over repeated runs")
+    ax.loglog(N, d["abs_error"], "o-", color="tab:blue", label=r"absolute error $|\pi_N - \pi|$")
     ax.loglog(N, d["expected_sigma"], "--", color="black",
               label=r"theory $\sqrt{\pi(4-\pi)/N} \approx 1.64/\sqrt{N}$")
     ax.set_xlabel("number of points N")
