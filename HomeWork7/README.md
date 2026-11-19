@@ -57,7 +57,7 @@ $u < 0.5$**. Running fraction of heads $f_n$:
 
 **Comment.** $f_n$ converges to 0.5, as the **law of large numbers** says, but **slowly and
 irregularly**: it last drops below 0.5 at $n = 1503$, then stays above 0.5 for the rest of the
-run. At the end of the run, $n = 100\,000$, $f_n = 0.50101$ is within one standard deviation
+run. At the end of the run, $n = \text{100 000}$, $f_n = 0.50101$ is within one standard deviation
 of 0.5:
 
 $$\sigma_n = \sqrt{\frac{p(1-p)}{n}} = \frac{1}{2\sqrt{n}} \approx 0.0016.$$
@@ -116,7 +116,7 @@ $$f_Y(y) = F_Y'(y) = \frac{1}{2\sqrt{y}},$$
 
 which is the formula $f_Y(y) = f_U(\sqrt{y}) \left\lvert \dfrac{d\sqrt{y}}{dy} \right\rvert$ of the notebook.
 
-It diverges at $y = 0$ but is integrable. $n = 200\,000$ samples (seed 13579), 50 bins on $[0, 1)$.
+It diverges at $y = 0$ but is integrable. $n = \text{200 000}$ samples (seed 13579), 50 bins on $[0, 1)$.
 
 ![Y = U^2](plots/square_uniform.png)
 
@@ -144,7 +144,7 @@ $$Y = -\frac{\ln(1 - U)}{\lambda}, \qquad \lambda = 1.5.$$
   $32 \ln 2/\lambda \approx 14.8$. That doesn't matter in practice ($P(Y > 14.8) \approx 2\cdot 10^{-10}$),
   but the tail of any distribution generated this way is truncated by the resolution of $U$.
 
-$n = 200\,000$ samples (seed 246813579, as in the notebook), 60 bins on $[0, 6)$; only 26 values
+$n = \text{200 000}$ samples (seed 246813579, as in the notebook), 60 bins on $[0, 6)$; only 26 values
 are $\ge 6$ (outside the histogram).
 
 ![Exponential](plots/exponential.png)
