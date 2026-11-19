@@ -139,10 +139,18 @@ For the exponential, $F(y) = 1 - e^{-\lambda y}$, so
 
 $$Y = -\frac{\ln(1 - U)}{\lambda}, \qquad \lambda = 1.5.$$
 
-- **No $\ln 0$.** $U \in [0, 1)$, so $1 - U \in (0, 1]$ and the logarithm is never $\ln 0$.
-- **A largest value.** The LCG has only $2^{32}$ possible values of $U$, so $Y$ can't exceed
-  $32 \ln 2/\lambda \approx 14.8$. That doesn't matter in practice ($P(Y > 14.8) \approx 2\cdot 10^{-10}$),
-  but the tail of any distribution generated this way is truncated by the resolution of $U$.
+Two properties of the values produced by the LCG:
+- **The logarithm is always defined.** The LCG gives $U = x/2^{32}$, with $x$ an integer from
+  0 to $2^{32} - 1$, so $0 \le U < 1$. Therefore $1 - U$ is never 0, and $\ln(1 - U)$ is always
+  finite.
+- **$Y$ has a maximum value.** The largest possible $U$ is $1 - 2^{-32}$, so the largest
+  possible $Y$ is
+
+  $$Y_{\max} = -\frac{\ln(2^{-32})}{\lambda} = \frac{32 \ln 2}{\lambda} \approx 14.8.$$
+
+  A true exponential variable can be larger, but only with probability
+  $P(Y > 14.8) = e^{-1.5 \cdot 14.8} \approx 2 \cdot 10^{-10}$, i.e. about once every 5 billion
+  values: with 200 000 samples this has no effect.
 
 $n = \text{200 000}$ samples (seed 246813579, as in the notebook), 60 bins on $[0, 6)$; only 26 values
 are $\ge 6$ (outside the histogram).
