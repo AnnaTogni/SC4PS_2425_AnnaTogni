@@ -1,9 +1,9 @@
-// Exercise 2 -- Monte Carlo estimate of pi with two LCG streams
+// Exercise 2 -- Monte Carlo estimate of pi with two RNG streams
 //
 // Throw N random points (x, y) uniformly in the unit square [0,1) x [0,1).
 // The fraction inside the quarter circle x^2 + y^2 <= 1 estimates its area pi/4:
 //   pi_N = 4 * (points inside) / N.
-// As in the notebook, x and y come from two LCG STREAMS: the same generator started
+// As in the notebook, x and y come from two RNG STREAMS: the same generator (the LCG) started
 // from two different seeds (123 for x, 987654321 for y).
 //
 // Each "inside" is a Bernoulli variable with p = pi/4, so
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     FILE *f = open_output("monte_carlo_pi.csv");
     fprintf(f, "N,pi_first_run,error_first_run,rms_error,expected_sigma\n");
 
-    printf("Exercise 2: Monte Carlo estimate of pi, two LCG streams (seeds %u, %u), "
+    printf("Exercise 2: Monte Carlo estimate of pi, two RNG streams (seeds %u, %u), "
            "%lu repetitions per N\n\n", seed_x, seed_y, R);
     printf("%11s %14s %12s %12s %14s %8s\n", "N", "pi (1st run)", "error", "RMS error",
            "sigma theory", "ratio");

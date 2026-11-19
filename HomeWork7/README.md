@@ -17,9 +17,9 @@
 
 | File | Content |
 |---|---|
-| `common.h`, `common.c` | The LCG, argument parsing, output files |
+| `common.h`, `common.c` | The random number generator (the notebook's LCG), argument parsing, output files |
 | `coin_tosses.c` | 1. Coin tosses and the law of large numbers |
-| `monte_carlo_pi.c` | 2. Monte Carlo estimate of π with two LCG streams |
+| `monte_carlo_pi.c` | 2. Monte Carlo estimate of π with two RNG streams |
 | `square_uniform.c` | 3. Change of variables Y = U² |
 | `exponential.c`, `exponential.h` | 4. Exponential distribution by inverse transform |
 | `empirical_cdf.c` | 5. Empirical CDF of the sample of exercise 4 |
@@ -41,7 +41,8 @@ example, `./coin_tosses 1e6 42` does 10⁶ tosses with seed 42.
 
 ## 1. Coin tosses and the law of large numbers
 
-100 000 tosses with the LCG (seed 123456789). As in the notebook, the toss is **heads if
+100 000 tosses with the random number generator (RNG) of the lecture notebook, a linear
+congruential generator (LCG), with seed 123456789. As in the notebook, the toss is **heads if
 u < 0.5**. Running fraction of heads fₙ:
 
 | n | Heads | fₙ | \|fₙ − 0.5\| | In units of σₙ |
@@ -65,12 +66,12 @@ u < 0.5**. Running fraction of heads fₙ:
   moves away from 0.5 it stays away for a while, because consecutive values share almost all
   their tosses. By n = 100 000 it is back within 0.64σ of 0.5.
 
-## 2. Monte Carlo estimate of π with two LCG streams
+## 2. Monte Carlo estimate of π with two RNG streams
 
 Points (x, y) uniform in the unit square. The fraction falling inside the quarter circle
 x² + y² ≤ 1 estimates its area π/4, so π_N = 4·(points inside)/N.
 
-**Two streams.** As in the notebook, x and y come from **two LCG streams**: the same generator
+**Two streams.** As in the notebook, x and y come from **two RNG streams**: the same generator (the LCG)
 started from two different seeds, 123 for the x coordinates and 987654321 for the y
 coordinates.
 
