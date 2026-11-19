@@ -1,12 +1,12 @@
 # HomeWork 06: Split the work
 
-The daxpy code of HomeWork 2, **d = a·x + y**, with the same vectors: a is a scalar, all the
-elements of x are equal to x and all the elements of y are equal to y (here a = 3, x = 0.1,
-y = 7.1, as in HomeWork 2). It is rewritten in C to follow the four points of the assignment:
+The daxpy code of HomeWork 2, $d = a \cdot x + y$, with the same vectors: $a$ is a scalar, all
+the elements of $x$ are equal to $x$ and all the elements of $y$ are equal to $y$ (here $a = 3$,
+$x = 0.1$, $y = 7.1$, as in HomeWork 2). It is rewritten in C to follow the four points of the assignment:
 
-1. compute d **chunk by chunk** instead of with a single loop, and check that d is the same;
+1. compute $d$ **chunk by chunk** instead of with a single loop, and check that $d$ is the same;
 2. sum the elements of every chunk into `partial_chunk_sum[]`, sum the partial sums, and check
-   that the result is the same as the sum of d in the original code;
+   that the result is the same as the sum of $d$ in the original code;
 3. take **all the inputs from an input file**, a text file with one `Variable = Value` line per
    input, read with an existing configuration-file library;
 4. save **all the vector chunks and the partial sums in an HDF5 file**.
@@ -59,14 +59,14 @@ for (chunk = 0; chunk < number_of_chunks; chunk++) {
 
 Two details of the implementation in C:
 1. **Number of chunks:** CEILING(n / chunk_size) is computed with integers as
-   `(n + chunk_size − 1) / chunk_size`, which gives 13 for n = 100, chunk_size = 8. (In C,
+   `(n + chunk_size − 1) / chunk_size`, which gives 13 for $n = 100$, `chunk_size = 8`. (In C,
    `n / chunk_size` between two integers is already truncated, so `ceil(n / chunk_size)` would
    give 12.)
-2. **Indices:** C arrays start from 0, so the chunk k covers the elements from `k·chunk_size` to
-   `min((k+1)·chunk_size, n) − 1`; with n = 100 and chunk_size = 8 there are 12 chunks of 8
+2. **Indices:** C arrays start from 0, so the chunk $k$ covers the elements from `k·chunk_size` to
+   `min((k+1)·chunk_size, n) − 1`; with $n = 100$ and `chunk_size = 8` there are 12 chunks of 8
    elements and a last one of 4.
 
-**Check: d is the same as in the original code.** The program also computes d with the original
+**Check: $d$ is the same as in the original code.** The program also computes $d$ with the original
 single loop and compares the two vectors element by element. Every element is computed with
 exactly the same operation, `a*x[i] + y[i]`, so the two vectors are **bit-for-bit identical**
 (0 of 100 elements differ).
@@ -76,16 +76,19 @@ exactly the same operation, `a*x[i] + y[i]`, so the two vectors are **bit-for-bi
 Inside the loop over the chunks, the elements of each chunk are added into
 `partial_chunk_sum[chunk]`; then the partial sums are added together.
 
-**Check: is this sum the same as the sum of d in the original code?** Not always bit-for-bit,
-and that is correct. The single loop computes ((d₀ + d₁) + d₂) + …, while the chunked version
+**Check: is this sum the same as the sum of $d$ in the original code?** Not always bit-for-bit,
+and that is correct. The single loop computes $((d_0 + d_1) + d_2) + \dots$, while the chunked version
 first adds inside each chunk and then adds the partial sums: these are the **same numbers added
 in a different order**, and floating-point addition is not associative (see HomeWork 5). With
-the given input file every dᵢ is 3·0.1 + 7.1 = 7.3999999999999995 (as in HomeWork 2), and the two
+the given input file every $d_i$ is $3 \cdot 0.1 + 7.1$ = 7.3999999999999995 (as in HomeWork 2), and the two
 sums of the 100 elements are 739.99999999999864 and 740.00000000000011: equal except in the last
 digits.
 
-So the program checks that they agree **within the rounding error** of a sum of n terms,
-|difference| ≤ n·ε·Σ|dᵢ| (here 1.6·10⁻¹¹), instead of comparing them with `==`.
+So the program checks that they agree **within the rounding error** of a sum of $n$ terms,
+
+$$\lvert \text{difference} \rvert \le n \varepsilon \sum_i \lvert d_i \rvert \quad (\text{here } 1.6 \cdot 10^{-11}),$$
+
+instead of comparing them with `==`.
 
 ## 3. Input file
 
@@ -114,9 +117,9 @@ output = daxpy_chunks.h5
 |---|---|
 | `n` | length of the vectors |
 | `chunk_size` *or* `number_of_chunks` | how to split the work: give one of the two, the other is computed |
-| `a` | the scalar in d = a·x + y |
-| `x` | the value of every element of the vector x |
-| `y` | the value of every element of the vector y |
+| `a` | the scalar in $d = a \cdot x + y$ |
+| `x` | the value of every element of the vector $x$ |
+| `y` | the value of every element of the vector $y$ |
 | `output` | name of the HDF5 file (optional, default `daxpy_chunks.h5`) |
 
 **Reading the file.** The file is read with GLib's `GKeyFile`, an existing library that parses

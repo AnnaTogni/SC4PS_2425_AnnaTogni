@@ -1,7 +1,9 @@
 # Floating-point summation
 
 Exercise from the floating-point lecture: define the vector
-**v = [1.0, 1.0e16, −1.0e16, −0.5]**, whose exact sum is **0.5**, and compute its sum in three
+$$v = [1.0,\ 10^{16},\ -10^{16},\ -0.5],$$
+
+whose exact sum is **0.5**, and compute its sum in three
 different ways:
 1. with a `for` loop;
 2. with the sum function of a library (GSL, `gsl_vector_sum`);
@@ -41,15 +43,15 @@ make
 
 ## The key fact: the 1 disappears
 
-A `double` has 53 bits of mantissa (52 stored + 1 implicit). Between 2⁵³ ≈ 9.0·10¹⁵ and
-2⁵⁴ ≈ 1.8·10¹⁶ the doubles are therefore **2 apart**: 10¹⁶ and 10¹⁶ + 2 are doubles, 10¹⁶ + 1
-is not. 10¹⁶ + 1 lies exactly halfway, and IEEE 754 rounds it (to the even neighbour) back to
-**10¹⁶**. The 1 is lost.
+A `double` has 53 bits of mantissa (52 stored + 1 implicit). Between $2^{53} \approx 9.0 \cdot 10^{15}$
+and $2^{54} \approx 1.8 \cdot 10^{16}$ the doubles are therefore **2 apart**: $10^{16}$ and
+$10^{16} + 2$ are doubles, $10^{16} + 1$ is not. $10^{16} + 1$ lies exactly halfway, and IEEE 754
+rounds it (to the even neighbour) back to $10^{16}$. The 1 is lost.
 
 As a consequence, floating-point addition is **not associative**: the result depends on the
 order of the operations:
 
-(1 + 10¹⁶) − 10¹⁶ = 10¹⁶ − 10¹⁶ = **0**, but 1 + (10¹⁶ − 10¹⁶) = 1 + 0 = **1**.
+$$(1 + 10^{16}) - 10^{16} = 10^{16} - 10^{16} = 0, \qquad \text{but} \qquad 1 + (10^{16} - 10^{16}) = 1 + 0 = 1.$$
 
 ## The three required methods
 
@@ -60,8 +62,8 @@ double s = 0.0;
 for (size_t i = 0; i < n; i++) s += v[i];
 ```
 
-The elements are added left to right: 1 + 10¹⁶ → 10¹⁶ (the 1 is lost), then − 10¹⁶ → 0, then
-− 0.5 → **−0.5**.
+The elements are added left to right: $1 + 10^{16} \to 10^{16}$ (the 1 is lost), then
+$-10^{16} \to 0$, then $-0.5 \to -0.5$.
 
 ### 2. GSL `gsl_vector_sum`
 
@@ -85,10 +87,10 @@ for (size_t i = 0; i < n; i++) {
 }
 ```
 
-For many numbers of similar size this makes the error independent of n. Here it does not help:
-the formula `c = (t − s) − y` is exact **only if |s| ≥ |y|**, i.e. if the running sum is larger
-than the new term. At step 2 the new term (10¹⁶) is much larger than the sum (1): `t − s` =
-10¹⁶ − 1 is itself rounded to 10¹⁶, so `c` = 0 and the lost 1 is never recorded. The program
+For many numbers of similar size this makes the error independent of $n$. Here it does not help:
+the formula `c = (t − s) − y` is exact **only if** $\lvert s \rvert \ge \lvert y \rvert$, i.e. if the running sum is larger
+than the new term. At step 2 the new term ($10^{16}$) is much larger than the sum (1): `t − s` =
+$10^{16} - 1$ is itself rounded to $10^{16}$, so `c` = 0 and the lost 1 is never recorded. The program
 prints this step by step:
 
 | Step | Add | Sum s | Compensation c |
@@ -120,8 +122,8 @@ s = t;
 return s + c;
 ```
 
-At step 2, |s| = 1 < |v[i]| = 10¹⁶, so `c += (10¹⁶ − 10¹⁶) + 1 = 1`: the lost 1 is recorded.
-At the end: −0.5 + 1 = **0.5**. Correct.
+At step 2, $\lvert s \rvert = 1 < \lvert v_i \rvert = 10^{16}$, so `c += (1e16 − 1e16) + 1 = 1`:
+the lost 1 is recorded. At the end: $-0.5 + 1 = 0.5$. Correct.
 
 | Step | Add | Sum s | Correction c |
 |---|---|---|---|
@@ -133,19 +135,22 @@ At the end: −0.5 + 1 = **0.5**. Correct.
 ### 5. Pairwise summation: does a different order help? Not here
 
 **Idea:** split the vector in two halves, sum each half recursively, then add the two results.
-The rounding error grows like log₂ n instead of n, which is why it is used, for example, by
+The rounding error grows like $\log_2 n$ instead of $n$, which is why it is used, for example, by
 NumPy's `sum`.
 
-Here: (1 + 10¹⁶) + (−10¹⁶ − 0.5) = 10¹⁶ + (−10¹⁶) = **0**. Both the 1 and the −0.5 are added to
-a number of size 10¹⁶ and are lost.
+Here:
 
-### 6. Sort by |x|, then loop: does "small numbers first" help? Not here
+$$(1 + 10^{16}) + (-10^{16} - 0.5) = 10^{16} + (-10^{16}) = 0.$$
+
+Both the 1 and the $-0.5$ are added to a number of size $10^{16}$ and are lost.
+
+### 6. Sort by $\lvert x \rvert$, then loop: does "small numbers first" help? Not here
 
 **Idea:** a classic rule is to add the numbers from the smallest to the largest in absolute
 value, so that the small ones are accumulated before they meet the big ones.
 
-The order becomes −0.5, 1, 10¹⁶, −10¹⁶: −0.5 + 1 = 0.5, then 0.5 + 10¹⁶ → 10¹⁶ (the 0.5 is
-lost), then − 10¹⁶ → **0**. The rule works when all the numbers have the same sign, but not when
+The order becomes $-0.5,\ 1,\ 10^{16},\ -10^{16}$: $-0.5 + 1 = 0.5$, then
+$0.5 + 10^{16} \to 10^{16}$ (the 0.5 is lost), then $-10^{16} \to 0$. The rule works when all the numbers have the same sign, but not when
 large terms cancel each other.
 
 ### 7. Loop in `long double`: does more precision help? Yes, but only here
@@ -153,7 +158,7 @@ large terms cancel each other.
 **Idea:** the same plain loop, with the running sum in `long double`. On x86 this is the 80-bit
 extended format, with 64 bits of mantissa instead of 53.
 
-Near 10¹⁶ the spacing becomes 2⁵³⁻⁶³ = 1/1024, so 10¹⁶ + 1 is stored exactly and the result is
+Near $10^{16}$ the spacing becomes $2^{53-63} = 1/1024$, so $10^{16} + 1$ is stored exactly and the result is
 **0.5**. More precision only moves the problem further away: with larger numbers it comes back,
 e.g. `./floating_point_sum 1 1e20 -1e20 -0.5` fails again.
 
@@ -161,12 +166,12 @@ e.g. `./floating_point_sum 1 1e20 -1e20 -0.5` fails again.
 
 **Idea** (Shewchuk, 1997; the algorithm behind Python's `math.fsum`): keep the running sum
 **exactly**, as a short list of doubles that do not overlap ("partials"). Each new number is
-added to the list with an *error-free transformation*: for two doubles a and b,
+added to the list with an *error-free transformation*: for two doubles $a$ and $b$ with $\lvert a \rvert \ge \lvert b \rvert$,
 
-hi = fl(a + b), lo = b − (hi − a) (with |a| ≥ |b|)
+$$\text{hi} = \mathrm{fl}(a + b), \qquad \text{lo} = b - (\text{hi} - a)$$
 
-gives two doubles with hi + lo = a + b **exactly** (hi is the rounded sum, lo the rounding
-error). Only at the end are the partials added into one double, correctly rounded.
+gives two doubles with $\text{hi} + \text{lo} = a + b$ **exactly** (hi is the rounded sum, lo the
+rounding error). Only at the end are the partials added into one double, correctly rounded.
 
 Result: **0.5**, the correctly rounded value of the exact sum. It is used here as the reference:
 it confirms that 0.5 is the right answer, and that the other methods are wrong because of
@@ -176,7 +181,7 @@ rounding, not because of a bug.
 
 - The result of a floating-point sum depends on the **order** of the operations, because each
   addition is rounded and addition is not associative.
-- The three required methods all lose the 1 when it is added to 10¹⁶, so they give −0.5.
+- The three required methods all lose the 1 when it is added to $10^{16}$, so they give $-0.5$.
 - **Kahan's compensation is not enough** when a term is larger than the running sum; Neumaier's
   version fixes exactly this case.
 - Changing the order (pairwise, sorting) does not help when large terms cancel.

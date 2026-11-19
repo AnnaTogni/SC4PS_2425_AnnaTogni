@@ -1,6 +1,6 @@
-# HomeWork 02: vector sum d = a·x + y
+# HomeWork 02: vector sum $d = a \cdot x + y$
 
-Numerical computing's "Hello World": `NumericalSum.c` computes **d = a·x + y**.
+Numerical computing's "Hello World": `NumericalSum.c` computes $d = a \cdot x + y$.
 - **a** is a scalar.
 - **x** and **y** are vectors of dimension N in which all elements are equal.
 
@@ -50,8 +50,8 @@ memory, and `2` if a check fails.
 | 10⁸ | 2.4 GB | ~0.4 s | $\color{green}{\textbf{O}}$ | $\color{red}{\textbf{X}}$ | $\color{green}{\textbf{O}}$ |
 
 ### Did you find any problems running the code for some N?
-Yes, at **N = 10⁸**. The three vectors of `double` (8 bytes each) need
-3 × 10⁸ × 8 B = **2.4 GB of RAM**.
+Yes, at $N = 10^8$. The three vectors of `double` (8 bytes each) need
+$3 \times 10^8 \times 8$ B = **2.4 GB of RAM**.
 - On a machine or VM with little memory, `malloc` fails, or the system kills the process.
   The program now checks the result of `malloc` and stops with a clear error message.
 - Printing every element (as the first version did) writes 10⁸ lines, about 2 GB of text, and
