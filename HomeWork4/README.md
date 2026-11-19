@@ -137,7 +137,7 @@ peaks.
 
 ![Short record: 50 and 55 Hz are not resolved](images/resolution_short_record.png)
 
-*Figure 2 — `images/resolution_short_record.png` (made for this README from the output of `src/sampling_demo.c`, case `short_record`, $N = 64$).*
+*Figure 2 — `images/resolution_short_record.png` (made for this README from the output of `src/sampling_demo.c`, case `short_record`, N = 64).*
 
 - **Top:** the signal over 0.45 s. The red dashed envelope is the beat (one period = 0.2 s);
   the yellow band is the only part that is recorded (0.125 s, the 64 black samples).
@@ -161,7 +161,7 @@ perfectly separated and without leakage.
 
 ![Longer record: 50 and 55 Hz are separated](images/resolution_longer_record.png)
 
-*Figure 3 — `images/resolution_longer_record.png` (made for this README: `src/sampling_demo.c` with $N = 64$, left, and $N = 512$, right).*
+*Figure 3 — `images/resolution_longer_record.png` (made for this README: `src/sampling_demo.c` with N = 64, left, and N = 512, right).*
 
 Both spectra are computed by `src/sampling_demo.c`; the right one with $N = 512$ (the Option B
 change). Same signal and same sampling rate: only the record length is different.

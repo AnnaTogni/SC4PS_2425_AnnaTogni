@@ -4,7 +4,7 @@
 
 $$C_{ij} = \sum_k A_{ik} B_{kj}, \qquad i, j, k = 0, \dots, N-1,$$
 
-with $A = a \mathbb{1}_N$ and $B = b \mathbb{1}_N$.
+with $A = a \mathbb 1_N$ and $B = b \mathbb 1_N$.
 
 The program:
 - computes the product with **all 6 loop orderings** and benchmarks them;
@@ -28,8 +28,8 @@ make
 | `a`, `b` | Value of the elements of A and B |
 | `N` | Matrix dimension ($N \times N$) |
 | `fileout` | File where C is saved (one row per line) |
-| `ones` *(default)* | $\mathbb{1}_N$ = matrix of ones: every $A_{ij} = a$, every $B_{ij} = b$, so every $C_{ij} = N a b$ |
-| `identity` | $\mathbb{1}_N$ = identity matrix: $A = a I$, $B = b I$, so $C = a b I$ |
+| `ones` *(default)* | $\mathbb 1_N$ = matrix of ones: every $A_{ij} = a$, every $B_{ij} = b$, so every $C_{ij} = N a b$ |
+| `identity` | $\mathbb 1_N$ = identity matrix: $A = a I$, $B = b I$, so $C = a b I$ |
 
 Examples:
 ```bash

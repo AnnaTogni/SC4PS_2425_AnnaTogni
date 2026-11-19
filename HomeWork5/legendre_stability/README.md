@@ -17,8 +17,8 @@ The three methods asked for:
 
    $$P_{\ell-1}(x) = \frac{2\ell+1}{\ell} x P_\ell(x) - \frac{\ell+1}{\ell} P_{\ell+1}(x), \qquad \ell = L, L-1, \dots, 1,$$
 
-   start from $\tilde{P}_{L+1} = 0$, $\tilde{P}_L = 1$, propagate backward, rescale with
-   $c = 1/\tilde{P}_0$, $P_\ell^{(\text{back})} = c \tilde{P}_\ell$, and check whether this
+   start from $\tilde P_{L+1} = 0$, $\tilde P_L = 1$, propagate backward, rescale with
+   $c = 1/\tilde P_0$, $P_\ell^{(\text{back})} = c \tilde P_\ell$, and check whether this
    recovers $P_\ell(x)$.
 
 List of actions: (1) implement the methods; (2) for $\ell = 0, \dots, 50$ compute absolute and
@@ -48,7 +48,7 @@ make plot                                       # run + figures in plots/
 |---|---|
 | **1. Forward** | Bonnet's recurrence upwards from $P_0 = 1$, $P_1 = x$, in `double` |
 | **2. Reference** | The same forward recurrence in quad precision, `__float128` (113-bit mantissa, about 34 decimal digits) |
-| **3. Backward (Miller style)** | $\tilde{P}_{L+1} = 0$, $\tilde{P}_L = 1$ with $L = 80$, the backward formula down to $\ell = 0$ in `double`, then $P_\ell^{(\text{back})} = \tilde{P}_\ell / \tilde{P}_0$ |
+| **3. Backward (Miller style)** | $\tilde P_{L+1} = 0$, $\tilde P_L = 1$ with $L = 80$, the backward formula down to $\ell = 0$ in `double`, then $P_\ell^{(\text{back})} = \tilde P_\ell / \tilde P_0$ |
 
 **The reference is reliable.**
 - A quad-precision forward recurrence is "a high-precision implementation of the recurrence",
@@ -90,20 +90,20 @@ make plot                                       # run + figures in plots/
 
 ![Relative error of P_l](plots/legendre_P_relative_error.png)
 
-*`plots/legendre_P_relative_error.png`: relative error of $P_\ell(x)$ (absolute value) versus
-$\ell$, one panel per $x$. Forward (blue) at the 10⁻¹⁶ level, backward (red) at 10⁻¹–10².*
+`plots/legendre_P_relative_error.png`: relative error of $P_\ell(x)$ (absolute value) versus
+$\ell$, one panel per $x$. Forward (blue) at the 10⁻¹⁶ level, backward (red) at 10⁻¹–10².
 
 ![Absolute error of P_l](plots/legendre_P_absolute_error.png)
 
-*`plots/legendre_P_absolute_error.png`: absolute error of $P_\ell(x)$ versus $\ell$. The
+`plots/legendre_P_absolute_error.png`: absolute error of $P_\ell(x)$ versus $\ell$. The
 forward error never exceeds a few times $\varepsilon$; the backward error is of order 0.1–10 for
-every $\ell \ge 1$.*
+every $\ell \ge 1$.
 
 ![Values](plots/legendre_values.png)
 
-*`plots/legendre_values.png`: the values themselves. The forward values lie on the reference;
+`plots/legendre_values.png`: the values themselves. The forward values lie on the reference;
 the backward ones are a different oscillating sequence that only agrees with $P_\ell$ at
-$\ell = 0$, where it is forced to by the rescaling.*
+$\ell = 0$, where it is forced to by the rescaling.
 
 ## 4. Explanation of the numerical behaviour
 
@@ -123,14 +123,14 @@ $\sim \ell^{-1/2}$**. Neither solution dominates the other.
 **Miller's algorithm is useful when the wanted solution is minimal in the direction of
 backward propagation.** If one solution is *minimal* (it decreases going up in $\ell$ while the
 other grows), then going *down* in $\ell$ the wanted solution is the one that grows. Whatever the
-arbitrary start ($\tilde{P}_L = 1$, $\tilde{P}_{L+1} = 0$), the backward recurrence quickly
+arbitrary start ($\tilde P_L = 1$, $\tilde P_{L+1} = 0$), the backward recurrence quickly
 forgets the unwanted part, and after enough steps only the wanted solution is left, up to a
-constant that the rescaling $c = 1/\tilde{P}_0$ fixes.
+constant that the rescaling $c = 1/\tilde P_0$ fixes.
 
 **For $P_\ell(x)$ on $\lvert x \rvert < 1$ there is no dominant/minimal separation.** $P_\ell$ and
 $Q_\ell$ have the same size, so nothing is suppressed in either direction. The backward
 recurrence returns an arbitrary combination $a P_\ell + b Q_\ell$, fixed by the arbitrary start.
-The rescaling with $c = 1/\tilde{P}_0$ fixes only one constant (the value at $\ell = 0$) and
+The rescaling with $c = 1/\tilde P_0$ fixes only one constant (the value at $\ell = 0$) and
 cannot remove the $Q_\ell$ part, so the result is not $P_\ell$, however large $L$ is (section 2).
 
 **Therefore the forward recurrence is stable.** For the same reason, going forward there is no
