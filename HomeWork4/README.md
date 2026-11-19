@@ -241,7 +241,7 @@ harmonic oscillator. These are the two normal modes:
 The out-of-phase mode is faster because the coupling spring adds to the restoring force.
 Equivalently, in matrix form
 
-$$m \ddot{\mathbf{x}} = -K \mathbf{x}, \qquad K = \begin{pmatrix} k + k_c & -k_c \\ -k_c & k + k_c \end{pmatrix}:$$
+$$m \ddot{\mathbf{x}} = -K \mathbf{x}, \qquad K = \begin{pmatrix} k + k_c & -k_c \cr -k_c & k + k_c \end{pmatrix}:$$
 
 the normal modes are the eigenvectors $(1, 1)$ and $(1, -1)$ of $K$, and the eigenvalues $k$ and
 $k + 2k_c$ give $m\omega^2$.
