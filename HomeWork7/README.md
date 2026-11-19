@@ -55,16 +55,10 @@ u < 0.5**. Running fraction of heads fₙ:
 
 ![Coin tosses](plots/coin_tosses.png)
 
-**Comment.**
-- **Convergence.** fₙ converges to 0.5, as the **law of large numbers** says. But it
-  converges **slowly and irregularly**: it last drops below 0.5 at n = 1503, then stays above
-  0.5 for the rest of the run, and is still at 0.513 after 10 000 tosses.
-- **How fast.** The typical distance from 0.5 is the standard deviation of fₙ:
-  σₙ = √(p(1−p)/n) = 1/(2√n). It shrinks only like **1/√n**: 100× more tosses make the error
-  just 10× smaller.
-- **The 2.6σ at n = 10 000 is a normal fluctuation.** fₙ behaves like a random walk: once it
-  moves away from 0.5 it stays away for a while, because consecutive values share almost all
-  their tosses. By n = 100 000 it is back within 0.64σ of 0.5.
+**Comment.** fₙ converges to 0.5, as the **law of large numbers** says, but **slowly and
+irregularly**: it last drops below 0.5 at n = 1503, then stays above 0.5 for the rest of the
+run. At the end of the run, n = 100 000, fₙ = 0.50101 is within one standard deviation
+σₙ = √(p(1−p)/n) = 1/(2√n) ≈ 0.0016 of 0.5.
 
 ## 2. Monte Carlo estimate of π with two RNG streams
 
