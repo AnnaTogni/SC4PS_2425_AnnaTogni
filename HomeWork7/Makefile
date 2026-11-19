@@ -33,7 +33,7 @@ help:
 	@echo "the last one(s) are the seed(s); the defaults are the notebook seeds."
 	@echo ""
 	@echo "  ./coin_tosses    [N] [seed]          1. N coin tosses, running fraction of heads"
-	@echo "  ./monte_carlo_pi [N_max] [sx] [sy]     2. pi, N = 10 ... N_max, 2 streams"
+	@echo "  ./monte_carlo_pi [N_max] [sx] [sy]     2. pi, running estimate up to N_max, 2 streams"
 	@echo "  ./square_uniform [n] [bins] [seed]   3. Y = U^2: histogram vs 1/(2 sqrt(y))"
 	@echo "  ./exponential    [n] [bins] [seed]   4. Y = -ln(1-U)/1.5: histogram vs the pdf"
 	@echo "  ./empirical_cdf  [n] [seed]          5. empirical CDF of the sample of 4"

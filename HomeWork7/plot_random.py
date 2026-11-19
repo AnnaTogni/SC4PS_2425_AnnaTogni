@@ -3,7 +3,7 @@
 Figures for HomeWork7 from the CSV files in output/ (run the five programs first).
 
   plots/coin_tosses.png      running fraction of heads with the +-1/(2 sqrt(n)) band
-  plots/monte_carlo_pi.png   |error| of the pi estimate vs N, with the 1/sqrt(N) law
+  plots/monte_carlo_pi.png   running error of the pi estimate vs n, with the 1/sqrt(n) law
   plots/square_uniform.png   histogram of Y = U^2 vs f(y) = 1/(2 sqrt(y))
   plots/exponential.png      histogram vs lambda exp(-lambda y), linear and log scale
   plots/empirical_cdf.png    empirical vs exact CDF, and their difference
@@ -63,14 +63,16 @@ def coin_tosses():
 
 def monte_carlo_pi():
     d = read("monte_carlo_pi.csv")
-    N = d["N"]
+    n = d["n"]
+    err = [e if e > 0 else float("nan") for e in d["abs_error"]]  # log scale: skip exact zeros
     fig, ax = plt.subplots(figsize=(7.5, 5), constrained_layout=True)
-    ax.loglog(N, d["abs_error"], "o-", color="tab:blue", label=r"absolute error $|\pi_N - \pi|$")
-    ax.loglog(N, d["expected_sigma"], "--", color="black",
-              label=r"theory $\sqrt{\pi(4-\pi)/N} \approx 1.64/\sqrt{N}$")
-    ax.set_xlabel("number of points N")
+    ax.loglog(n, err, "-", linewidth=0.8, color="tab:blue",
+              label=r"absolute error $|\pi_n - \pi|$ after $n$ points")
+    ax.loglog(n, d["expected_sigma"], "--", color="black",
+              label=r"theory $\sqrt{\pi(4-\pi)/n} \approx 1.64/\sqrt{n}$")
+    ax.set_xlabel("number of points n")
     ax.set_ylabel(r"error of the estimate of $\pi$")
-    ax.set_title("Exercise 2: Monte Carlo estimate of $\\pi$")
+    ax.set_title("Exercise 2: Monte Carlo estimate of $\\pi$ (running estimate)")
     ax.grid(True, which="both", alpha=0.3)
     ax.legend()
     save(fig, "monte_carlo_pi.png")

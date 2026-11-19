@@ -69,30 +69,32 @@ x² + y² ≤ 1 estimates its area π/4, so π_N = 4·(points inside)/N.
 started from two different seeds, 123 for the x coordinates and 987654321 for the y
 coordinates.
 
-**Error.** Each point is "inside" with probability p = π/4, so the expected error of π_N is
-σ = √(π(4−π)/N) ≈ 1.64/√N. The program estimates π for N = 10, 10², …, 10⁷ and compares the
-absolute error |π_N − π| with σ:
+**Error.** Each point is "inside" with probability p = π/4, so the expected error of the
+estimate after n points is σ = √(π(4−π)/n) ≈ 1.64/√n. The points are added one at a time, up
+to n = 10⁷: after each point the running estimate π_n = 4·(points inside so far)/n gives an
+absolute error |π_n − π|. The plot shows it at ~1260 values of n, evenly spaced on a log scale;
+the table gives it at the powers of 10:
 
-| N | π_N | \|π_N − π\| | σ theory |
+| n | π_n | \|π_n − π\| | σ theory |
 |---|---|---|---|
 | 10 | 4.0000000 | 8.6·10⁻¹ | 5.2·10⁻¹ |
-| 10² | 3.0000000 | 1.4·10⁻¹ | 1.6·10⁻¹ |
-| 10³ | 3.1280000 | 1.4·10⁻² | 5.2·10⁻² |
-| 10⁴ | 3.1360000 | 5.6·10⁻³ | 1.6·10⁻² |
-| 10⁵ | 3.1412000 | 3.9·10⁻⁴ | 5.2·10⁻³ |
-| 10⁶ | 3.1418480 | 2.6·10⁻⁴ | 1.6·10⁻³ |
-| 10⁷ | 3.1410156 | 5.8·10⁻⁴ | 5.2·10⁻⁴ |
+| 10² | 3.0400000 | 1.0·10⁻¹ | 1.6·10⁻¹ |
+| 10³ | 3.1160000 | 2.6·10⁻² | 5.2·10⁻² |
+| 10⁴ | 3.1384000 | 3.2·10⁻³ | 1.6·10⁻² |
+| 10⁵ | 3.1380000 | 3.6·10⁻³ | 5.2·10⁻³ |
+| 10⁶ | 3.1417880 | 1.9·10⁻⁴ | 1.6·10⁻³ |
+| 10⁷ | 3.1412232 | 3.7·10⁻⁴ | 5.2·10⁻⁴ |
 
 ![Monte Carlo pi](plots/monte_carlo_pi.png)
 
 **Comment.**
-- **The error decreases like 1/√N.** Over six orders of magnitude of N the error goes from
-  ~1 to ~10⁻³ and stays below or around σ ≈ 1.64/√N: every extra correct digit costs 100×
-  more points, and 10⁷ points give only ~3 correct decimals.
-- **The error of a single estimate fluctuates.** σ is only the typical size of the error, so
-  for a given N the error can be smaller than σ, as at N = 10⁵ and 10⁶, and it does not
-  always decrease from one N to the next: at N = 10⁷ it is slightly larger than at 10⁶,
-  but still about one σ.
+- **The error decreases like 1/√n.** Over seven orders of magnitude of n the error follows
+  the line σ ≈ 1.64/√n, staying around or below it: every extra correct digit costs 100× more
+  points, and 10⁷ points give only ~3 correct decimals.
+- **The error of a single run fluctuates.** σ is only the typical size of the error. The
+  deep downward spikes are the moments when π_n crosses π and the error passes through zero,
+  and the error does not always decrease: from n = 10⁶ to 10⁷ it grows from 1.9·10⁻⁴ to
+  3.7·10⁻⁴, still within one σ.
 
 ## 3. Change of variables: Y = U²
 
