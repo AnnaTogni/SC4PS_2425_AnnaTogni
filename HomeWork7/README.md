@@ -69,9 +69,9 @@ x² + y² ≤ 1 estimates its area π/4, so π_N = 4·(points inside)/N.
 started from two different seeds, 123 for the x coordinates and 987654321 for the y
 coordinates.
 
-**Error.** Each point is "inside" with probability p = π/4, so the expected error of the
-estimate after n points is σ = √(π(4−π)/n) ≈ 1.64/√n. The estimate after n points is
-π_n = 4·(points inside)/n, with absolute error |π_n − π|. The plot shows this error at ~1260
+**Error.** The estimate after n points is π_n = 4·(points inside)/n. Each point is "inside"
+with probability p = π/4, so the expected error of π_n is σ = √(π(4−π)/n) ≈ 1.64/√n. The
+absolute error |π_n − π| is compared with σ: the plot shows this error at ~1260
 values of n between 1 and 10⁷, evenly spaced on a log scale; the table shows it at the powers
 of 10:
 
