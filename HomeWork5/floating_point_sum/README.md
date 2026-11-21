@@ -100,9 +100,6 @@ Result: **−0.5**.
 
 ## Five additional methods
 
-These are not part of the exercise. Each one tests one idea about *why* the required methods
-fail and *how* the sum can be computed correctly.
-
 ### 4. Neumaier: does a better compensation fix Kahan? Yes
 
 **Idea** (Neumaier, 1974): compute the lost part from whichever of the two operands is
