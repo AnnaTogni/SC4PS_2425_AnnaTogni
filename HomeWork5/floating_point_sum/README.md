@@ -11,10 +11,6 @@ different ways:
 
 then compare the results.
 
-All three give **−0.5**. To understand *why*, and *what* would give the correct result,
-`floating_point_sum.c` also tests five **additional methods** (4–8), which are not required by
-the exercise.
-
 | File | Content |
 |---|---|
 | `floating_point_sum.c` | The program: the 3 required methods, the 5 additional ones, and a step-by-step trace of Kahan and Neumaier |
